@@ -1,8 +1,10 @@
-# Quant Researcher → Head of AI: 13-Week Roadmap
+# The Agentic Alpha Lab — 13-Week Roadmap
 
+**Subtitle**: Quant Researcher → Head of AI
 **Goal**: Head of AI in Quant Research by end of Q2 2026
 **Philosophy**: Build first, learn theory to explain why it broke. Every week ships code.
 **Constraint**: Free and open-source data sources and tools only.
+**Differentiator**: Statistically Validated Agentic Signals — moving beyond LLM opinions to backtested, risk-managed investment signals.
 **Reference**: Virat Singh's [ai-hedge-fund](https://github.com/virattt/ai-hedge-fund) (50K+ stars) — our version adds real backtesting, statistical validation, and RAG over unstructured financial documents.
 
 ---
@@ -274,14 +276,20 @@ Same pattern for strategies (`BaseStrategy`), features (`BaseFeature`), and back
 - [ ] Triple barrier labeling (López de Prado)
 - [ ] Meta-labeling — ML to size bets, not just direction
 - [ ] Ensemble + model stacking
-- [ ] Signal decay analysis (rolling IC, half-life)
+- [ ] Signal decay analysis (rolling IC, half-life, decay curve visualization)
+- [ ] Signal Decay Engine: measure how long an AI-derived signal remains profitable
+  - Rolling Information Coefficient (IC) over time windows
+  - Half-life of IC (when does the signal lose statistical significance?)
+  - Decay curve visualization (key demo artifact for meetup)
+  - Compare decay rates: technical vs fundamental vs NLP-derived signals
 
 **Learn**:
 - López de Prado Ch. 7-10 (meta-labeling, bet sizing)
 - Implement triple barrier labeling from scratch
 - Bias-variance tradeoff in financial context
+- Information Coefficient analysis: Grinold & Kahn Ch. 6
 
-**Key concept**: Meta-labeling — separate "what to trade" from "how much to bet"
+**Key concept**: Meta-labeling — separate "what to trade" from "how much to bet". Signal decay tells you "how long to hold the bet."
 
 ---
 
@@ -414,32 +422,41 @@ Same pattern for strategies (`BaseStrategy`), features (`BaseFeature`), and back
 
 ### This IS Fintech
 
-Fintech = technology that improves or automates financial services. This project is specifically:
-- **Investment Technology / WealthTech** — AI-powered quant research
-- **RegTech adjacent** — automated SEC filing analysis
-- **Infrastructure** — market data pipelines, backtesting engines
+Fintech = technology that improves or automates financial services. Specifically:
+- **Quantitative Asset Management** — AI-powered systematic investment research
+- **WealthTech** — institutional-grade investment infrastructure
+- **RegTech adjacent** — automated SEC filing analysis and compliance data extraction
+
+### Positioning: "The Agentic Alpha Lab"
+
+**Core differentiator**: Statistically Validated Agentic Signals.
+- Virat's ai-hedge-fund: viral PoC, LLM *opinions* over structured API data
+- Our platform: production-grade *validated signals* with backtesting, risk management, and RAG over unstructured filings
+- Relevant to Singapore's institutional landscape: Point72, Citadel, GIC, Temasek
 
 ### Presentation Angle
 
-**Title**: "Building an AI Quant Research Platform with Claude Code — Live"
+**Title**: "The Agentic Alpha Lab: Building Statistically Validated Investment Signals with Claude Code"
 
 **Structure** (30-40 min):
-1. **Problem** (5 min): What quant researchers do, why AI engineers are the new quants
-2. **Reference** (5 min): Virat's ai-hedge-fund (50K stars) — what's missing
-3. **Live demo** (15 min): Walk through the platform:
+1. **The Problem** (5 min): Most AI-in-finance projects produce opinions, not signals. What makes a signal tradeable?
+2. **The Reference** (5 min): Virat's ai-hedge-fund (50K stars) — impressive but no validation. What's missing?
+3. **Live Demo** (15 min): Walk through the platform:
    - Fetch data → generate features → run backtest → show tear sheet
    - LLM-powered earnings call analysis → signal generation
-   - Risk dashboard
-4. **Claude Code angle** (5 min): How Claude Code accelerated development
-   - Show git log — "13 weeks of work"
-   - Live: ask Claude Code to add a new connector or strategy
-5. **Architecture** (5 min): The layered, modular design — how to build extensible fintech
+   - Signal decay visualization — "how long does a CEO sentiment signal last?"
+   - Risk dashboard with position sizing
+4. **Claude Code as Force Multiplier** (5 min): How AI-assisted development accelerates fintech prototyping
+   - Show git log — thousands of lines built in weeks
+   - Live: ask Claude Code to add a new connector or strategy on stage
+5. **Architecture Deep-Dive** (5 min): The layered, modular design with plug-in connectors
 
-**Demo-ready features to prioritize**:
-- Backtest tear sheets (visual, impressive)
-- LLM research output (earnings call → investment thesis)
-- Risk dashboard (real-time feel)
-- Live Claude Code interaction (add a feature on stage)
+**Key demo artifacts** (prioritize these):
+- Signal decay curves (unique, impressive, quantitative)
+- Backtest tear sheets (visual, professional)
+- LLM research output (earnings call → investment thesis with citations)
+- Side-by-side: Virat's agent output vs our validated signal
+- Live Claude Code interaction (build something on stage)
 
 ---
 
