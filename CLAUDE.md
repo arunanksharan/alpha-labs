@@ -6,8 +6,12 @@ AI-powered quantitative research platform with statistically validated agentic s
 - Building a full quant research stack: data → features → signals → portfolio → execution
 - Python 3.12+, using 2026 best-in-class tooling
 - Heavy use of LLMs for alpha research (earnings calls, filings, news sentiment)
+- Dashboard is a separate Next.js app under `dashboard/` using Avashi design system
 
 ## Stack (2026 Best-in-Class)
+
+### Python Backend
+- **Package mgmt**: Poetry
 - **DataFrames**: Polars (primary), Pandas 3.0 (interop only)
 - **Storage**: DuckDB + Parquet
 - **Vector DB**: LanceDB (embedded, no server)
@@ -15,8 +19,24 @@ AI-powered quantitative research platform with statistically validated agentic s
 - **ML**: LightGBM + XGBoost + scikit-learn
 - **LLM**: Anthropic SDK v0.89+
 - **Agents**: LangGraph for multi-agent orchestration
-- **Viz**: Marimo (research notebooks), Plotly Dash (production dashboards), Streamlit (quick demos)
-- **Package mgmt**: uv
+- **Research notebooks**: Marimo (reactive, .py files)
+
+### Dashboard (Next.js)
+- **Framework**: Next.js 15+ / React 19
+- **Components**: shadcn/ui (Radix + CVA + Tailwind)
+- **Styling**: Tailwind CSS, `clsx` + `tailwind-merge` + `class-variance-authority`
+- **Charts**: Recharts (via shadcn charts) for financial data, Plotly for 3D surfaces
+- **3D Visualizations**: Three.js + @react-three/fiber + @react-three/drei
+- **Animation**: Framer Motion for DOM, requestAnimationFrame for 3D
+- **State**: Zustand (client), @tanstack/react-query (server/API)
+- **Icons**: lucide-react
+- **Font**: Geist (Sans + Mono)
+- **Theme**: Dark mode default, violet primary (#8b5cf6)
+- **API**: FastAPI backend serving signals, backtests, analytics via REST
+
+### Design Reference
+- Follow Avashi design system: `/Users/paruljuniwal/kuzushi_labs/avashi/avashi-deploy/CLAUDE.md`
+- Quality bar: Linear, Vercel, Raycast level UI
 
 ## Code Style
 - Use ruff for linting (target py312)

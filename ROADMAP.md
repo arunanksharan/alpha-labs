@@ -94,7 +94,8 @@
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                     PRESENTATION LAYER                          │
-│  Streamlit Dashboard │ Jupyter Notebooks │ CLI │ API (FastAPI)  │
+│  Next.js Dashboard (shadcn/ui + Three.js + Recharts)            │
+│  Marimo Notebooks │ CLI │ FastAPI (REST API for dashboard)      │
 └────────────────────────────┬────────────────────────────────────┘
                              │
 ┌────────────────────────────▼────────────────────────────────────┐
@@ -388,13 +389,18 @@ Same pattern for strategies (`BaseStrategy`), features (`BaseFeature`), and back
 
 ## Phase 4: Integration + Leadership Positioning (Weeks 12-13)
 
-### Week 12: Full Pipeline + Demo Polish
-**Build**: End-to-end platform
+### Week 12: Full Pipeline + Dashboard
+**Build**: End-to-end platform with production-grade UI
 - [ ] Data → Features → Signals → Portfolio → Execution → Monitoring pipeline
-- [ ] Streamlit dashboard: strategy performance, risk metrics, research outputs
+- [ ] FastAPI backend serving signals, backtests, analytics via REST
+- [ ] **Next.js dashboard** (Avashi design system):
+  - shadcn/ui components, dark mode, violet primary
+  - Recharts for equity curves, P&L, factor exposures
+  - Three.js + R3F for 3D correlation surfaces, vol surfaces
+  - Framer Motion for animated signal cards, transitions
+  - Real-time WebSocket feed for paper trading signals
 - [ ] Alert system (drawdown, signal notifications)
 - [ ] Paper trading via Alpaca (free)
-- [ ] FastAPI layer for programmatic access
 - [ ] Docker Compose for one-command deployment
 - [ ] Demo mode: pre-loaded with compelling backtest results
 
