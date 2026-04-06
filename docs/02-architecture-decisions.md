@@ -96,3 +96,39 @@
 - The "Claude Code" angle: demonstrate how AI-assisted development accelerates fintech prototyping
 
 **Status**: Accepted. Update presentation section of ROADMAP.md.
+
+---
+
+## ADR-007: 2026 Stack Audit — Key Upgrades
+
+**Decision**: Upgrade stack to 2026 best-in-class after audit.
+
+**Date**: 2026-04-07
+
+**Changes made**:
+
+| Component | Before | After | Why |
+|---|---|---|---|
+| Python | 3.11+ | **3.12+** | Pattern matching improvements, better error messages, faster |
+| Package mgmt | pip | **uv** | 10-100x faster, replaces pip+pyenv+virtualenv |
+| Vector DB | ChromaDB | **LanceDB** | Embedded (no server), DuckDB-compatible, 100x faster random access |
+| Backtesting | VectorBT + Qlib + Backtrader | **VectorBT + NautilusTrader** + Qlib | NautilusTrader: Rust engine, nanosecond execution sim. Backtrader: abandoned, dropped |
+| Viz/Notebooks | Jupyter + Streamlit | **Marimo** (research) + Streamlit (quick) + **Plotly Dash** (production) | Marimo: reactive, .py files, git-friendly. Dash: scales to production dashboards |
+| Anthropic SDK | >=0.40.0 | **>=0.89.0** | Tool use improvements, structured outputs |
+| Polars | >=1.0.0 | **>=1.39.0** | Performance improvements, better ecosystem support |
+| DuckDB | >=1.0.0 | **>=1.5.0** | Native Delta Lake, Iceberg support |
+| Ruff | >=0.4.0 | **>=0.11.0** | Latest rules, py312 target |
+
+**What was validated as already correct**:
+- Polars as primary DataFrame (5-10x faster than Pandas, ecosystem gap closing)
+- DuckDB + Parquet for storage (still best for single-machine analytics)
+- LightGBM + XGBoost + scikit-learn for ML (no challenger for tabular data)
+- LangGraph for agent orchestration (most production-ready)
+- yfinance for free market data (still works, OpenBB wraps it but adds complexity)
+
+**What was intentionally NOT adopted**:
+- OpenBB SDK: wraps yfinance but adds abstraction over our own abstraction. Our BaseConnector pattern already solves this.
+- Databento: excellent data but costs money after $125 credit. Violates free/OSS constraint.
+- Delta Lake/Iceberg: overkill for single-user research. DuckDB reads both natively if needed later.
+
+**Status**: Accepted. pyproject.toml and CLAUDE.md updated.
