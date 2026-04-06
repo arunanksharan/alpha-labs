@@ -45,11 +45,10 @@
 
 | Framework | Language | Stars | Best For |
 |-----------|----------|-------|----------|
+| **VectorBT** | Python | 4K+ | Vectorized, Numba-accelerated. Best for rapid signal research |
+| **NautilusTrader** | Python/Rust | 5K+ | Rust engine, nanosecond execution sim, production-grade |
 | **Qlib** (Microsoft) | Python | 16K+ | ML-oriented quant research, factor mining |
-| **Backtrader** | Python | 14K+ | Event-driven backtesting, flexible |
-| **VectorBT** | Python | 4K+ | Vectorized backtesting, fast |
 | **QuantConnect LEAN** | C#/Python | 9K+ | Production algo trading, 300+ fund users |
-| **Zipline (reloaded)** | Python | — | Quantopian's engine, maintained fork |
 
 ### Portfolio / Risk Tools (All Free/OSS)
 
@@ -136,7 +135,7 @@
 │                    BACKTEST LAYER                                │
 │  Event-Driven Engine │ Walk-Forward │ Monte Carlo Simulation    │
 │  Transaction Cost Models │ Slippage │ Tear Sheet Generator      │
-│  Pluggable: Qlib │ VectorBT │ Backtrader (via BacktestConnector)│
+│  Pluggable: VectorBT │ NautilusTrader │ Qlib (via BacktestConnector)│
 └────────────────────────────┬────────────────────────────────────┘
                              │
 ┌────────────────────────────▼────────────────────────────────────┐
@@ -157,7 +156,7 @@
 ┌────────────────────────────▼────────────────────────────────────┐
 │                      STORAGE LAYER                              │
 │  DuckDB (analytical queries) │ Parquet (columnar files)         │
-│  SQLite (metadata/config)    │ ChromaDB (vector embeddings)     │
+│  SQLite (metadata/config)    │ LanceDB (vector embeddings)     │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -298,7 +297,7 @@ Same pattern for strategies (`BaseStrategy`), features (`BaseFeature`), and back
 - [ ] `SECEdgarConnector` enhancement: full-text 10-K, 10-Q, 8-K download + chunking
 - [ ] Earnings call transcript analyzer (sentiment drift, management tone shift)
 - [ ] Forward guidance extraction + tracking over time
-- [ ] ChromaDB vector store for document embeddings
+- [ ] LanceDB vector store for document embeddings
 - [ ] RAG pipeline: query financial documents with Claude API
 - [ ] Multi-agent investor personas (à la Virat) BUT with RAG-grounded reasoning
 - [ ] Cross-document contradiction signals (e.g., CEO says X in earnings call, 10-K says Y)
