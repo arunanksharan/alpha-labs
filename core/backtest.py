@@ -45,6 +45,17 @@ class BacktestResult:
     slippage_model: str = "none"
     metadata: dict = field(default_factory=dict)
 
+    def to_json(self) -> dict:
+        """Serialize to JSON-compatible dict (agent-friendly)."""
+        from core.serialization import backtest_result_to_json
+        return backtest_result_to_json(self)
+
+    @classmethod
+    def from_json(cls, data: dict) -> "BacktestResult":
+        """Deserialize from JSON dict."""
+        from core.serialization import backtest_result_from_json
+        return backtest_result_from_json(data)
+
 
 class BaseBacktestEngine(ABC):
     """Interface for backtesting engines (VectorBT, Qlib, Backtrader, etc.)."""
