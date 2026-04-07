@@ -55,6 +55,13 @@ AI-powered quantitative research platform with statistically validated agentic s
 - Purged cross-validation for any ML model (no standard k-fold)
 - Every external dependency behind an ABC — swap without touching strategies
 
+## Commit Rules
+- **Small logical commits** — never batch an entire week into one commit
+- Each production module + its test file = 1 commit
+- Docs/init updates = separate commit
+- Pattern: `feat(weekN): module description`, `docs(weekN): inits and log`
+- Run tests before every commit
+
 ## Branching
 - `production` ← `staging` ← `development` ← `feature/*`
 - Feature branches: `feature/week2-mean-reversion`, etc.
