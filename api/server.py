@@ -113,6 +113,30 @@ def health() -> dict:
     return {"status": "ok", "platform": "Agentic Alpha Lab"}
 
 
+@app.get("/api/models")
+def list_models() -> dict:
+    """List available LLM models and which have API keys configured."""
+    from core.llm import get_available_models, check_api_keys, DEFAULT_MODEL
+    return {
+        "default_model": DEFAULT_MODEL,
+        "api_keys": check_api_keys(),
+        "models": get_available_models(),
+    }
+
+
+class LLMTestRequest(BaseModel):
+    model: str = "claude-sonnet"
+    prompt: str = "What is the current outlook for US equities? Answer in 2 sentences."
+
+
+@app.post("/api/models/test")
+def test_model(req: LLMTestRequest) -> dict:
+    """Test a specific LLM model with a prompt."""
+    from core.llm import llm_call
+    response = llm_call(req.prompt, model=req.model)
+    return response.to_json()
+
+
 # ---------------------------------------------------------------------------
 # Agent routes & WebSocket
 # ---------------------------------------------------------------------------
