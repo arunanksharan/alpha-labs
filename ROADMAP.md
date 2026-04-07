@@ -93,15 +93,21 @@
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                     PRESENTATION LAYER                          │
-│  Next.js Dashboard (shadcn/ui + Three.js + Recharts)            │
-│  Marimo Notebooks │ CLI │ FastAPI (REST API for dashboard)      │
+│                     CONSUMER LAYER                               │
+│  AI Agents (via MCP)  │  Next.js Dashboard  │  CLI  │  API      │
+│  Claude Code / GPT    │  Human Monitoring   │       │  FastAPI  │
 └────────────────────────────┬────────────────────────────────────┘
                              │
 ┌────────────────────────────▼────────────────────────────────────┐
-│                    ORCHESTRATION LAYER                           │
-│  Research Pipeline │ Backtest Runner │ Signal Combiner           │
-│  Multi-Agent Framework (LangGraph) │ Workflow Scheduler          │
+│                  MCP SERVER + TOOL LAYER                         │
+│  fetch_data │ compute_features │ generate_signals │ run_backtest │
+│  analyze_risk │ research_filing │ signal_decay │ paper_trade     │
+└────────────────────────────┬────────────────────────────────────┘
+                             │
+┌────────────────────────────▼────────────────────────────────────┐
+│                 AGENT ORCHESTRATION (LangGraph)                  │
+│  ResearchAgent → RiskAgent → ValidationAgent → ReportAgent      │
+│  Human Approval Gates │ Circuit Breakers │ Event Stream          │
 └────────────────────────────┬────────────────────────────────────┘
                              │
 ┌────────────────────────────▼────────────────────────────────────┐
@@ -387,37 +393,83 @@ Same pattern for strategies (`BaseStrategy`), features (`BaseFeature`), and back
 
 ---
 
-## Phase 4: Integration + Leadership Positioning (Weeks 12-13)
+## Phase 4: Agent-Native Platform + Demo (Weeks 12-13)
 
-### Week 12: Full Pipeline + Dashboard
-**Build**: End-to-end platform with production-grade UI
-- [ ] Data → Features → Signals → Portfolio → Execution → Monitoring pipeline
-- [ ] FastAPI backend serving signals, backtests, analytics via REST
-- [ ] **Next.js dashboard** (Avashi design system):
-  - shadcn/ui components, dark mode, violet primary
-  - Recharts for equity curves, P&L, factor exposures
-  - Three.js + R3F for 3D correlation surfaces, vol surfaces
-  - Framer Motion for animated signal cards, transitions
-  - Real-time WebSocket feed for paper trading signals
-- [ ] Alert system (drawdown, signal notifications)
-- [ ] Paper trading via Alpaca (free)
-- [ ] Docker Compose for one-command deployment
-- [ ] Demo mode: pre-loaded with compelling backtest results
+### The Shift: Human-Driven → Agent-Native
 
-**Learn**:
-- System design for trading systems
-- How quant funds structure research → production pipeline
+The quant industry is transitioning:
+1. **Human-driven** (2020): "I run the analysis and decide" ← most quant platforms today
+2. **Human-in-the-loop** (2024): "Agent proposes, I approve"
+3. **Human-on-the-loop** (2026): "Agents act autonomously, I monitor + override" ← **our target**
+
+This is what makes us different from Virat's ai-hedge-fund (human-driven with LLM opinions)
+and positions us for Head of AI roles where the mandate is "build autonomous research agents."
 
 ---
 
-### Week 13: Documentation + Thought Leadership
-**Build**: Credibility artifacts
-- [ ] Architecture documentation with C4 diagrams
+### Week 12: Agent-Native Infrastructure
+
+#### 12A: MCP Server — Make the Platform Agent-Consumable
+- [ ] **MCP (Model Context Protocol) server** exposing all platform capabilities as tools:
+  - `fetch_market_data(ticker, start, end)` → structured OHLCV
+  - `compute_features(ticker, features)` → feature values
+  - `generate_signals(strategy, params)` → trading signals
+  - `run_backtest(signals, params)` → BacktestResult as JSON
+  - `analyze_risk(signals, portfolio)` → RiskAssessment
+  - `research_filing(ticker, query)` → RAG-powered answer with citations
+  - `compute_signal_decay(signals, prices)` → IC curve
+- [ ] Any AI agent (Claude Code, GPT, custom) can now use our platform as a tool
+- [ ] This is the equivalent of building an API, but for the agent world
+
+#### 12B: Multi-Agent Research System (LangGraph)
+- [ ] **ResearchAgent**: autonomously fetches data, computes features, generates signals
+- [ ] **RiskAgent**: evaluates signals against risk constraints, sizes positions
+- [ ] **ValidationAgent**: runs backtests, checks deflated Sharpe, flags overfitting
+- [ ] **ReportAgent**: generates research reports from validated signals
+- [ ] **Orchestrator**: LangGraph DAG that coordinates agents with human approval gates
+- [ ] Human-on-the-loop: agents propose trades → human approves → execute
+- [ ] Circuit breakers: agents can be paused/overridden at any node
+
+#### 12C: FastAPI Backend + Event System
+- [ ] FastAPI endpoints returning **structured JSON** (agent-first, human-second)
+- [ ] WebSocket event stream for real-time signal notifications
+- [ ] `/api/signals` — current active signals with metadata
+- [ ] `/api/backtest/{strategy}` — run and return results
+- [ ] `/api/research/{ticker}` — RAG query
+- [ ] `/api/agents/status` — multi-agent system status
+- [ ] SSE (Server-Sent Events) for signal alerts to both agents and dashboards
+
+#### 12D: Next.js Dashboard (Human Monitoring Layer)
+- [ ] **Next.js dashboard** (Avashi design system) — for human-on-the-loop monitoring:
+  - Agent activity feed (what each agent is doing/proposing)
+  - Approval queue (signals awaiting human sign-off)
+  - Recharts for equity curves, P&L, factor exposures
+  - Three.js + R3F for 3D correlation surfaces, vol surfaces
+  - Signal decay visualization (key demo artifact)
+  - Real-time WebSocket updates from agent system
+- [ ] Paper trading via Alpaca (free)
+- [ ] Docker Compose for one-command deployment
+
+---
+
+### Week 13: Demo + Thought Leadership
+
+#### 13A: Singapore Meetup Preparation
+- [ ] End-to-end demo: agent system runs autonomously, human monitors on dashboard
+- [ ] Demo mode: pre-loaded with compelling backtest results
+- [ ] Live MCP demo: Claude Code calls our platform's tools on stage
+
+#### 13B: Documentation
+- [ ] Architecture docs with C4 diagrams (agent-native architecture)
+- [ ] ADR: "Why Agent-Native over Human-Driven"
 - [ ] Strategy research reports (publishable quality)
+
+#### 13C: Thought Leadership
 - [ ] Blog posts / LinkedIn articles:
-  - "How I Built an LLM-Powered Quant Research Platform with Claude Code"
-  - "Meta-Labeling: Why Most ML Trading Strategies Fail"
-  - "From Engineer to Quant: What I Built in 13 Weeks"
+  - "From Human-Driven to Agent-Native: How AI is Reshaping Quant Research"
+  - "Building an MCP Server for Financial Research — Why Agents Need Tool Access"
+  - "Signal Decay: The Metric That Proves Your AI Trading Strategy Works"
+  - "The Agentic Alpha Lab: What I Built in 13 Weeks with Claude Code"
 - [ ] Open-source the platform
 - [ ] Prepare Singapore meetup presentation
 
@@ -425,43 +477,38 @@ Same pattern for strategies (`BaseStrategy`), features (`BaseFeature`), and back
 
 ## Singapore Claude Code + Fintech Meetup
 
-### This IS Fintech
-
-Fintech = technology that improves or automates financial services. Specifically:
-- **Quantitative Asset Management** — AI-powered systematic investment research
-- **WealthTech** — institutional-grade investment infrastructure
-- **RegTech adjacent** — automated SEC filing analysis and compliance data extraction
-
 ### Positioning: "The Agentic Alpha Lab"
 
-**Core differentiator**: Statistically Validated Agentic Signals.
-- Virat's ai-hedge-fund: viral PoC, LLM *opinions* over structured API data
-- Our platform: production-grade *validated signals* with backtesting, risk management, and RAG over unstructured filings
-- Relevant to Singapore's institutional landscape: Point72, Citadel, GIC, Temasek
+**Core differentiator**: Agent-native quant research — AI agents as first-class users, humans as supervisors.
+
+| Platform | Approach | Limitation |
+|----------|----------|------------|
+| Virat's ai-hedge-fund | LLM opinions, human-driven | No validation, no backtesting |
+| Traditional quant platforms | Human runs analysis | Slow, not scalable |
+| **Our platform** | **Agent-native, human-on-the-loop** | None — this is the future |
 
 ### Presentation Angle
 
-**Title**: "The Agentic Alpha Lab: Building Statistically Validated Investment Signals with Claude Code"
+**Title**: "The Agentic Alpha Lab: When AI Agents Do the Research and Humans Just Approve"
 
 **Structure** (30-40 min):
-1. **The Problem** (5 min): Most AI-in-finance projects produce opinions, not signals. What makes a signal tradeable?
-2. **The Reference** (5 min): Virat's ai-hedge-fund (50K stars) — impressive but no validation. What's missing?
-3. **Live Demo** (15 min): Walk through the platform:
-   - Fetch data → generate features → run backtest → show tear sheet
-   - LLM-powered earnings call analysis → signal generation
-   - Signal decay visualization — "how long does a CEO sentiment signal last?"
-   - Risk dashboard with position sizing
-4. **Claude Code as Force Multiplier** (5 min): How AI-assisted development accelerates fintech prototyping
-   - Show git log — thousands of lines built in weeks
-   - Live: ask Claude Code to add a new connector or strategy on stage
-5. **Architecture Deep-Dive** (5 min): The layered, modular design with plug-in connectors
+1. **The Shift** (5 min): Human-driven → human-in-the-loop → human-on-the-loop. Where quant funds are headed.
+2. **The Reference** (3 min): Virat's ai-hedge-fund (50K stars) — LLM opinions, no validation, human-driven.
+3. **Our Architecture** (5 min): Agent-native design — MCP server, multi-agent LangGraph orchestration, human approval gates.
+4. **Live Demo** (15 min):
+   - Show the multi-agent system running: ResearchAgent → RiskAgent → ValidationAgent → ReportAgent
+   - Human approves/rejects on the dashboard
+   - Signal decay visualization — "this NLP signal lasts 30 days, this technical signal lasts 3"
+   - **Live MCP demo**: ask Claude Code to use our platform's tools on stage — "Claude, analyze AAPL's latest 10-K and tell me if management sentiment shifted"
+5. **Claude Code as Force Multiplier** (5 min): 20,000+ lines built in weeks, agent-native from the ground up
+6. **Q&A**: "How do you handle agent disagreements?" "What's the approval latency?"
 
 **Key demo artifacts** (prioritize these):
-- Signal decay curves (unique, impressive, quantitative)
-- Backtest tear sheets (visual, professional)
-- LLM research output (earnings call → investment thesis with citations)
-- Side-by-side: Virat's agent output vs our validated signal
-- Live Claude Code interaction (build something on stage)
+- Multi-agent system running autonomously (the showstopper)
+- MCP tool calling from Claude Code (live, interactive)
+- Signal decay curves (unique, quantitative, visual)
+- Human approval dashboard (the "on-the-loop" UX)
+- Backtest tear sheets with deflated Sharpe (institutional rigor)
 
 ---
 
