@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAppStore } from "@/lib/store";
+import { ModelSelector } from "@/components/ModelSelector";
 
 const NAV_ITEMS = [
   { href: "/", label: "Monitor", icon: Activity },
@@ -126,6 +127,9 @@ export default function Sidebar() {
             )}
           </AnimatePresence>
         </button>
+
+        {/* Model selector */}
+        <ModelSelector expanded={expanded} />
 
         {/* Connection status */}
         <div className="flex items-center gap-3 px-0.5">
