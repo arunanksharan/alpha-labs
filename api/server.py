@@ -118,9 +118,13 @@ def health() -> dict:
 # ---------------------------------------------------------------------------
 
 from api.agent_routes import router as agent_router  # noqa: E402
+from api.chat_routes import router as chat_router  # noqa: E402
+from api.cycle_routes import router as cycle_router  # noqa: E402
 from api.events import event_manager  # noqa: E402
 
 app.include_router(agent_router)
+app.include_router(chat_router)
+app.include_router(cycle_router)
 
 
 @app.websocket("/ws")
