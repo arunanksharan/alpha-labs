@@ -88,8 +88,10 @@ export function AgentActivityFeed({ events, className }: AgentActivityFeedProps)
                   </div>
                   <p className="mt-0.5 text-sm text-zinc-400 truncate">{event.message}</p>
                 </div>
-                <span className="shrink-0 text-[10px] text-zinc-600">
-                  {event.timestamp ? new Date(event.timestamp).toLocaleTimeString() : ""}
+                <span className="shrink-0 text-[10px] text-zinc-600" suppressHydrationWarning>
+                  {event.timestamp
+                    ? new Date(event.timestamp).toLocaleTimeString("en-GB", { hour12: false })
+                    : ""}
                 </span>
               </motion.div>
             );

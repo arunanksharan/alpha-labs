@@ -101,22 +101,32 @@ class AgentRunner:
         state = report_agent(state)
         return state
 
-    def approve(self, state: ResearchState) -> ResearchState:
+    def _ensure_state(self, state: ResearchState | dict) -> ResearchState:
+        """Normalize dict (from LangGraph) back to ResearchState."""
+        if isinstance(state, dict):
+            return ResearchState(**{
+                k: state.get(k, getattr(ResearchState, k, None))
+                for k in ResearchState.__dataclass_fields__
+            })
+        return state
+
+    def approve(self, state: ResearchState | dict) -> ResearchState | dict:
         """Human approves the pending signals -- resume the pipeline."""
+        state = self._ensure_state(state)
         state.human_approved = True
         state.add_event("human", AgentStatus.APPROVED, "Human approved signals")
 
         if self._graph is not None:
             return self._graph.invoke(state)
 
-        # Fallback sequential continuation
         state = validation_agent(state)
         state = decay_agent(state)
         state = report_agent(state)
         return state
 
-    def reject(self, state: ResearchState) -> ResearchState:
+    def reject(self, state: ResearchState | dict) -> ResearchState | dict:
         """Human rejects the pending signals -- skip to report."""
+        state = self._ensure_state(state)
         state.human_approved = False
         state.add_event("human", AgentStatus.REJECTED, "Human rejected signals")
         state = report_agent(state)
