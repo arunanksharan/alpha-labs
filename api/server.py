@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import logging
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
@@ -111,3 +111,24 @@ def list_strategies() -> dict:
 @app.get("/api/health")
 def health() -> dict:
     return {"status": "ok", "platform": "Agentic Alpha Lab"}
+
+
+# ---------------------------------------------------------------------------
+# Agent routes & WebSocket
+# ---------------------------------------------------------------------------
+
+from api.agent_routes import router as agent_router  # noqa: E402
+from api.events import event_manager  # noqa: E402
+
+app.include_router(agent_router)
+
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket) -> None:
+    """Top-level WebSocket for general event streaming."""
+    await event_manager.connect(websocket)
+    try:
+        while True:
+            await websocket.receive_text()
+    except WebSocketDisconnect:
+        event_manager.disconnect(websocket)
