@@ -6,8 +6,9 @@ import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Activity,
-  BarChart3,
-  Search,
+  MessageSquare,
+  Target,
+  TrendingUp,
   Bot,
   Settings,
   Zap,
@@ -19,8 +20,9 @@ import { useAppStore } from "@/lib/store";
 
 const NAV_ITEMS = [
   { href: "/", label: "Monitor", icon: Activity },
-  { href: "/backtest", label: "Backtest", icon: BarChart3 },
-  { href: "/research", label: "Research", icon: Search },
+  { href: "/chat", label: "Chat", icon: MessageSquare },
+  { href: "/signals", label: "Signals", icon: Target },
+  { href: "/performance", label: "Performance", icon: TrendingUp },
   { href: "/agents", label: "Agents", icon: Bot },
   { href: "/settings", label: "Settings", icon: Settings },
 ] as const;
