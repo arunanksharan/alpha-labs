@@ -18,8 +18,8 @@ def _clear_state():
     import api.agent_routes as routes
 
     routes._runs.clear()
-    routes._pending_approval.clear()
-    routes._approval_results.clear()
+    routes._approval_events.clear()
+    routes._approval_decisions.clear()
     # Reset singleton event history
     event_manager._history.clear()
     event_manager._connections.clear()
@@ -148,21 +148,22 @@ def test_approve_with_pending(client: TestClient) -> None:
     """Approve should resolve a pending approval."""
     import api.agent_routes as routes
 
-    routes._pending_approval["run_abc"] = asyncio.Event()
+    routes._approval_events["run_abc"] = asyncio.Event()
 
-    response = client.post("/api/agents/approve", json={"approved": True})
+    response = client.post("/api/agents/approve", json={"approved": True, "run_id": "run_abc"})
     assert response.status_code == 200
     body = response.json()
     assert body["run_id"] == "run_abc"
     assert body["decision"] == "approved"
-    assert "run_abc" not in routes._pending_approval
+    # Event is set (signaling the background task to resume)
+    assert routes._approval_events["run_abc"].is_set()
 
 
 def test_reject_with_pending(client: TestClient) -> None:
     """Reject should resolve a pending approval with rejected status."""
     import api.agent_routes as routes
 
-    routes._pending_approval["run_xyz"] = asyncio.Event()
+    routes._approval_events["run_xyz"] = asyncio.Event()
 
     response = client.post("/api/agents/approve", json={"approved": False})
     assert response.status_code == 200
