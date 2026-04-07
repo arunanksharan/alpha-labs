@@ -64,7 +64,7 @@ def _run_agents_sync(
     from agents.state import AgentStatus
 
     runner = AgentRunner()
-    state = runner.run(
+    result = runner.run(
         ticker=ticker,
         strategy=strategy,
         start_date=start_date,
@@ -72,23 +72,31 @@ def _run_agents_sync(
         initial_capital=initial_capital,
     )
 
+    # LangGraph returns dict, fallback returns ResearchState — normalize
+    if isinstance(result, dict):
+        state = result
+        get = lambda k, d=None: state.get(k, d)
+    else:
+        state = result
+        get = lambda k, d=None: getattr(state, k, d)
+
     # Check if approval is needed
-    if state.human_approval_required and state.human_approved is None:
-        _states[run_id] = (runner, state)
+    if get("human_approval_required") and get("human_approved") is None:
+        _states[run_id] = (runner, result)
         return {
             "status": "awaiting_approval",
-            "events": state.events,
-            "signals_count": len(state.signals),
-            "risk_assessment": state.risk_assessment,
+            "events": get("events", []),
+            "signals_count": len(get("signals", [])),
+            "risk_assessment": get("risk_assessment", {}),
         }
 
     return {
         "status": "completed",
-        "events": state.events,
-        "backtest_result": state.backtest_result,
-        "validation_result": state.validation_result,
-        "signal_decay": state.signal_decay,
-        "signals": state.signals,
+        "events": get("events", []),
+        "backtest_result": get("backtest_result", {}),
+        "validation_result": get("validation_result", {}),
+        "signal_decay": get("signal_decay", {}),
+        "signals": get("signals", []),
     }
 
 
@@ -97,20 +105,25 @@ def _resume_agents_sync(run_id: str, approved: bool) -> dict:
     if run_id not in _states:
         return {"status": "error", "error": "No pending state for this run"}
 
-    runner, state = _states.pop(run_id)
+    runner, prev_state = _states.pop(run_id)
 
     if approved:
-        state = runner.approve(state)
+        result = runner.approve(prev_state)
     else:
-        state = runner.reject(state)
+        result = runner.reject(prev_state)
+
+    if isinstance(result, dict):
+        get = lambda k, d=None: result.get(k, d)
+    else:
+        get = lambda k, d=None: getattr(result, k, d)
 
     return {
         "status": "completed",
-        "events": state.events,
-        "backtest_result": state.backtest_result,
-        "validation_result": state.validation_result,
-        "signal_decay": state.signal_decay,
-        "signals": state.signals,
+        "events": get("events", []),
+        "backtest_result": get("backtest_result", {}),
+        "validation_result": get("validation_result", {}),
+        "signal_decay": get("signal_decay", {}),
+        "signals": get("signals", []),
     }
 
 
