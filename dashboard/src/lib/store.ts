@@ -32,6 +32,10 @@ interface AppState {
   // Metrics
   metrics: BacktestMetrics | null;
   setMetrics: (m: BacktestMetrics | null) => void;
+
+  // Model selection
+  selectedModel: string;
+  setSelectedModel: (model: string) => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -66,4 +70,8 @@ export const useAppStore = create<AppState>((set) => ({
   // Metrics
   metrics: null,
   setMetrics: (metrics) => set({ metrics }),
+
+  // Model selection
+  selectedModel: "claude-sonnet",
+  setSelectedModel: (selectedModel) => set({ selectedModel }),
 }));
