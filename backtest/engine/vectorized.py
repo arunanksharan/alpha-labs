@@ -290,9 +290,14 @@ class VectorizedBacktestEngine(BaseBacktestEngine):
     # ------------------------------------------------------------------
     @staticmethod
     def _normalise_dates(df: pl.DataFrame) -> pl.DataFrame:
-        """Cast date column to pl.Date if it is a string."""
-        if "date" in df.columns and df["date"].dtype == pl.Utf8:
+        """Normalize date column to pl.Date regardless of input type."""
+        if "date" not in df.columns:
+            return df
+        dtype = df["date"].dtype
+        if dtype == pl.Utf8:
             df = df.with_columns(pl.col("date").str.to_date().alias("date"))
+        elif isinstance(dtype, pl.Datetime):
+            df = df.with_columns(pl.col("date").dt.date().alias("date"))
         return df
 
     @staticmethod
