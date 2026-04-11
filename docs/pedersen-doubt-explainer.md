@@ -1274,4 +1274,57 @@ The Fundamentalist agent runs this exact model: estimates future cash flows, dis
 
 ---
 
+## ⭐ Q21: Why Value Investing Works — flipping the Gordon Model (Chapter 9)
+
+*Critical: connects valuation theory to systematic quant investing.*
+
+### The Key Insight
+
+From Gordon: P = D / (k - g). Flip it:
+
+```
+k = D/P + g
+
+Expected return = dividend yield + growth
+```
+
+**Price is in the denominator.** Low price → high D/P → high expected return. High price → low D/P → low expected return.
+
+### Why Cheap Stocks Outperform
+
+```
+Stock A: P=$100, D=$5, g=3% → Expected return = 5% + 3% = 8%
+Stock B: P=$200, D=$5, g=3% → Expected return = 2.5% + 3% = 5.5%
+```
+
+Same company fundamentals. But Stock A (cheap) has 2.5% higher expected return just because its price is lower.
+
+### Any "Cash Flow / Price" Ratio Predicts Returns
+
+Since k = CF/P + g, ANY ratio that measures cash flow relative to price works:
+
+```
+High E/P  (earnings yield)    → high expected return → BUY
+High B/P  (book-to-price)     → high expected return → BUY (this IS Fama-French HML)
+High D/P  (dividend yield)    → high expected return → BUY
+High CF/P (cash flow yield)   → high expected return → BUY
+```
+
+All work for the SAME mathematical reason — the Gordon model guarantees it.
+
+### Simple Value Strategy (Fama-French HML)
+
+```
+1. Compute B/P (or E/P) for every stock
+2. Buy top 20% (cheapest)
+3. Short bottom 20% (most expensive)
+4. Rebalance monthly
+```
+
+This IS the HML factor. No DCF needed. The simple ratio works because Gordon guarantees cheap = higher expected return.
+
+**DCF tells you WHY a stock is cheap. The ratio lets you TRADE the cheapness systematically.** Quant funds use ratios. Discretionary PMs use DCF. Both work for the same reason.
+
+---
+
 *Last updated: April 11, 2026. Add more questions as you read.*
