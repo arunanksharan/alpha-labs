@@ -373,4 +373,125 @@ Report both. A strategy where Sortino >> Sharpe has **positive skew** — surpri
 
 ---
 
+## Q9: Why does checking P&L more frequently make risk feel worse? (Page 34, Table 2.1)
+
+### The Setup
+
+You have a strategy with annual Sharpe = 1.0. Genuinely excellent. Over a year, you expect to make money with high probability. But how does it FEEL day to day?
+
+### How Sharpe Changes With Time Horizon
+
+SR scales by √n. So if annual SR = 1.0:
+
+```
+SR over 4 years   = 1.0 × √4   = 2.0
+SR over 1 year    = 1.0 × √1   = 1.0
+SR over 1 quarter = 1.0 / √4   = 0.50
+SR over 1 month   = 1.0 / √12  = 0.29
+SR over 1 day     = 1.0 / √252 = 0.063
+SR over 1 minute  = ≈ 0.003
+```
+
+Same strategy. Different horizons. Wildly different Sharpe ratios.
+
+### Pedersen's Table 2.1 (Annual SR = 1.0)
+
+```
+Time Horizon    │  Sharpe Ratio  │  Pr(Loss)  │  How It Feels
+────────────────┼────────────────┼────────────┼──────────────────
+4 years         │     2.0        │    2.3%    │  "Almost never lose"
+1 year          │     1.0        │   16.0%    │  "Lose 1 in 6 years"
+1 quarter       │     0.5        │   31.0%    │  "Lose 1 in 3 quarters"
+1 month         │     0.29       │   39.0%    │  "Lose 4-5 months per year"
+1 day           │     0.063      │   47.5%    │  "Lose almost every other day"
+1 minute        │     0.003      │   49.9%    │  "Basically a coin flip"
+```
+
+A strategy with SR = 1.0 loses money **47.5% of all trading days**. Almost every other day. At the minute level: 49.9% — essentially 50/50.
+
+### The Psychological Impact
+
+A PM with a live P&L screen glances at it 50 times a day. Each glance: ~50% chance of seeing red. Rational brain knows "annual SR = 1.0, I'll make money." Emotional brain sees "I'm losing RIGHT NOW."
+
+This is why experienced PMs check P&L once or twice a day, not continuously. The STRATEGY didn't change — only how often you LOOKED.
+
+---
+
+## Q10: How does Sharpe ratio convert to loss probability? (Page 34)
+
+### The Formula
+
+```
+Pr(loss) = Pr(N < -SR)
+```
+
+Where N is a standard normal random variable (mean 0, std dev 1).
+
+### Step-by-Step Derivation
+
+**Step 1**: Any return can be written as:
+
+```
+R^e = E(R^e) + σ × N
+       ↑          ↑
+   expected    random surprise
+   (average)   (noise scaled by volatility)
+```
+
+Why σ × N? Because N has std dev = 1, but your actual returns have std dev = σ. Multiplying scales the noise to your real volatility.
+
+**Concrete example**: E(R^e) = 0.5% monthly, σ = 2% monthly.
+
+```
+If N = +1.0 → R^e = 0.5% + 2% × 1.0  = +2.5%   (good month)
+If N = -0.5 → R^e = 0.5% + 2% × (-0.5) = -0.5%  (bad month)
+If N = -1.5 → R^e = 0.5% + 2% × (-1.5) = -2.5%  (terrible month)
+```
+
+**Step 2**: When do you lose money? When R^e < 0:
+
+```
+E(R^e) + σ × N < 0          (return is negative)
+σ × N < -E(R^e)              (move E(R^e) to right side)
+N < -E(R^e) / σ              (divide both sides by σ)
+N < -SR                       (because SR = E(R^e)/σ by definition)
+```
+
+**In English**: You lose whenever random noise N is more negative than your Sharpe ratio. SR is how many standard deviations of noise your expected return can absorb before going negative.
+
+**Step 3**: How often does N go below -SR? Look it up in the standard normal table:
+
+```
+Pr(N < x):
+
+x = -3.0  →   0.13%     SR=3.0 → lose 0.13% of the time (almost never)
+x = -2.0  →   2.3%      SR=2.0 → lose 2.3% of the time
+x = -1.0  →  16.0%      SR=1.0 → lose 16% of the time
+x = -0.5  →  31.0%      SR=0.5 → lose 31% of the time
+x = -0.063→  47.5%      SR=0.063 → lose 47.5% (daily SR from annual 1.0)
+x =  0.0  →  50.0%      SR=0.0 → coin flip (no edge at all)
+```
+
+### Why This Makes Sense Intuitively
+
+**High Sharpe (SR = 2.0)**: Your expected return is 2 standard deviations above zero. Noise has to be EXTREMELY negative (below -2σ) to pull you into a loss. That's rare — only 2.3%.
+
+**Low Sharpe (SR = 0.063, daily)**: Your expected return is only 0.063 standard deviations above zero. Even mild negative noise pushes you into a loss. That happens 47.5% of the time.
+
+**Zero Sharpe (SR = 0)**: Your expected return IS zero. Any negative noise at all gives you a loss. That's exactly 50% — a coin flip. You have no edge.
+
+### The Punchline
+
+One number (annual Sharpe) tells you the probability of losing money at ANY time horizon:
+
+```
+1. Convert: SR_period = SR_annual / √(periods per year)
+2. Look up: Pr(N < -SR_period)
+3. That's your loss probability at that horizon
+```
+
+This is why SR is the universal language of hedge funds — it encodes everything about the strategy's risk-return in a single number.
+
+---
+
 *Last updated: April 11, 2026. Add more questions as you read.*
