@@ -802,4 +802,161 @@ The Risk Manager agent combines ALL of these: it evaluates every proposed signal
 
 ---
 
+## Q15: Demand Pressure — How hedge funds profit as contrarians (Page 45-46)
+
+Every trade has two sides. When someone MUST buy or sell — not because they want to but because they HAVE to — price gets pushed away from fair value. A hedge fund profits by taking the other side.
+
+**Price and expected return move in opposite directions.** Demand pushes price UP → future returns go DOWN (overpaying). Selling pushes price DOWN → future returns go UP (bargain).
+
+**Examples**: Index additions (index funds must buy regardless of price), merger arbitrage (buying risk that others must shed), fire sales during crises (buying what's dumped at any price), and options hedging pressure (see Q16).
+
+The hedge fund is a shopkeeper: buys at wholesale (when others dump), sells at retail (when others chase). Profit = compensation for providing the SERVICE of being available to trade.
+
+---
+
+## ⭐ Q16: Options Hedging Pressure — CRITICAL EXAMPLE (Pages 45-46)
+
+*This is a critical concept that demonstrates sophisticated market understanding. Master this for interviews.*
+
+### The Setup: Who Sells Put Options and Why
+
+A **put option** is insurance for stocks. You pay a premium; if the market crashes, the put pays you the difference.
+
+```
+Investor owns $100K of stocks, worried about crash.
+Buys put option (strike $4,800) for $3,000 premium.
+  If market stays above $4,800: loses $3,000 (cost of insurance)
+  If market drops 20%: loses $20K on stocks, put pays ~$17K. Net loss ~$6K.
+```
+
+**Buyers**: Pension funds, insurance companies, wealthy individuals — anyone wanting downside protection.
+
+**Sellers**: Banks (Goldman, JP Morgan). They collect the premium but take on risk. They don't want the risk — so they **delta hedge**.
+
+### Delta: How Much an Option Reacts to Price Moves
+
+Delta measures how much an option's value changes per $1 move in the stock.
+
+```
+Put with delta = -0.5:
+  S&P goes UP $1   → put LOSES $0.50
+  S&P goes DOWN $1 → put GAINS $0.50
+```
+
+Delta ranges for puts:
+- Stock way above strike: delta ≈ 0 (put barely reacts)
+- Stock near strike: delta ≈ -0.5
+- Stock way below strike: delta ≈ -1.0 (put moves dollar-for-dollar)
+
+**Think of delta as "how many shares this option behaves like."** A put with delta -0.5 behaves like being short 0.5 shares.
+
+### Delta Hedging: How Banks Neutralize Risk
+
+The bank sold puts → exposed to downside. To hedge, make total delta = 0.
+
+```
+Bank sold puts on 10,000 shares, delta = -0.5
+Bank's delta from puts = +5,000 (sold put = opposite sign)
+
+To hedge: bank SHORTS 5,000 shares of S&P
+
+Now:
+  Market up $1 → puts: +$5,000 for bank, short stocks: -$5,000 → NET $0
+  Market down $1 → puts: -$5,000, short stocks: +$5,000 → NET $0
+
+  Perfectly hedged. Bank earns premium risk-free.
+```
+
+### THE CRITICAL PART: Delta Changes As Price Moves
+
+**Delta is NOT constant.** It changes with the stock price. This is called **gamma**.
+
+```
+S&P at $5,000 (above strike $4,800):
+  Put delta = -0.30 → bank shorts 3,000 shares
+
+S&P RISES to $5,200 (further from strike):
+  Put delta = -0.15 → bank only needs to short 1,500 shares
+  Bank must BUY BACK 1,500 shares → BUYING PRESSURE as market rises
+
+S&P DROPS to $4,900 (closer to strike):
+  Put delta = -0.45 → bank needs to short 4,500 shares
+  Bank must SELL 1,500 more shares → SELLING PRESSURE as market falls
+```
+
+**Delta hedging forces banks to BUY when prices rise and SELL when prices fall.** The exact opposite of a value investor. And they MUST do this — it's not optional.
+
+### The Self-Reinforcing Cycle
+
+The options market is trillions of dollars. Delta hedging involves billions in stock trades.
+
+```
+Market rises 1%:
+  → Delta decreases on all puts
+  → ALL banks globally must BUY stocks to reduce hedges
+  → Billions of buying pressure hits market
+  → Pushes prices UP further
+  → Delta decreases MORE
+  → MORE forced buying
+  → Amplifying upward cycle
+
+Market drops 1%:
+  → Delta increases on all puts
+  → ALL banks must SELL stocks to increase hedges
+  → Billions of selling pressure
+  → Prices drop FURTHER
+  → MORE forced selling
+  → Amplifying downward cycle
+```
+
+This is called **"short gamma"** exposure. Banks' hedging AMPLIFIES market moves in both directions.
+
+### How a Savvy Fund Exploits This
+
+You can estimate banks' option positions from public data (options open interest by strike). You can predict when they'll be forced to buy or sell.
+
+```
+S&P at $5,000. Massive put open interest at $4,800 strike. Market rising.
+
+You know:
+  1. Banks sold these puts
+  2. As market rises, delta decreases
+  3. Banks will BUY stocks to reduce hedges
+  4. The buying will happen at predictable price levels
+
+Your trade:
+  1. Buy at $5,000 (ahead of the forced buyers)
+  2. Market rises → banks start buying (forced) → pushes to $5,080
+  3. You sell at $5,080 TO the banks
+  4. Profit: $80 per unit
+
+You bought AHEAD of forced demand.
+You sold TO the forced buyers.
+You PROVIDED LIQUIDITY to their hedging pressure.
+```
+
+### The Full Chain
+
+```
+Investors want protection
+  → Buy puts from banks
+    → Banks collect premium, have risk
+      → Banks delta-hedge by trading stocks
+        → Delta changes as prices move (gamma)
+          → Banks FORCED to buy high, sell low
+            → Creates PREDICTABLE demand pressure
+              → Savvy fund trades ahead of this
+                → Profits by providing liquidity
+```
+
+### Why This Matters for the Head of AI Interview
+
+If asked "How would your AI detect demand pressure?" — the sophisticated answer:
+
+"We'd monitor options open interest by strike, implied volatility skew, and estimate dealer gamma exposure. When we detect large short-gamma concentrations near current price levels, we know delta hedging flows will amplify moves. The system positions ahead of these predictable flows, providing liquidity to dealers who are forced to trade."
+
+This shows you understand options, delta, gamma, microstructure, AND system design. That's $1M-level thinking.
+
+---
+
 *Last updated: April 11, 2026. Add more questions as you read.*
