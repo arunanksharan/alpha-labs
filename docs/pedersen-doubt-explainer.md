@@ -1163,4 +1163,115 @@ Always report VaR AND Expected Shortfall together. VaR alone is dangerously inco
 
 ---
 
+## ⭐ Q20: Intrinsic Value, Dividend Discount Model, Gordon Growth Model (Pages 89-90)
+
+*Critical for interviews. This is the foundation of ALL equity valuation.*
+
+### The Variables
+
+```
+V_t     = intrinsic value TODAY (what we're solving for)
+D_{t+s} = dividend paid s years from now
+k       = required rate of return / discount rate (your minimum acceptable return)
+g       = dividend growth rate (how fast dividends grow yearly)
+R^f     = risk-free rate (~2-5%)
+β       = stock's beta (market sensitivity)
+```
+
+### Why Future Cash Is Worth Less (Discounting)
+
+$100 next year at 8% required return is worth $100/1.08 = $92.59 today. Because you could invest $92.59 today and have $100 next year.
+
+### Computing k (The Discount Rate) via CAPM
+
+```
+k = R^f + β × (E(R^M) - R^f)
+
+Example: R^f=2%, β=1.2, market premium=5%
+k = 2% + 1.2 × 5% = 8%
+```
+
+Risky stocks (high β) → high k → future dividends discounted more → lower value. This is why risky stocks are cheaper.
+
+### The One-Period Formula
+
+```
+V_t = (D_{t+1} + V_{t+1}) / (1 + k)
+
+"Today's value = next year's dividend + next year's value, discounted."
+```
+
+Problem: need V_{t+1}, which needs V_{t+2}, which needs V_{t+3}...
+
+### The Dividend Discount Model (Infinite Sum)
+
+Unroll the recursion:
+
+```
+V_t = D_{t+1}/(1+k) + D_{t+2}/(1+k)² + D_{t+3}/(1+k)³ + ...
+
+Each future dividend discounted more heavily:
+  Year 1:  $5.00/1.08  = $4.63
+  Year 10: $5.00/1.08¹⁰ = $2.32
+  Year 50: $5.00/1.08⁵⁰ = $0.11  (almost worthless today)
+```
+
+This IS Buffett: "Value = present value of all future dividends."
+
+### Gordon Growth Model (The Shortcut)
+
+If dividends grow at constant rate g every year: D_{t+s} = D_t × (1+g)^s
+
+The infinite sum becomes:
+
+```
+V_t = D_{t+1} / (k - g)
+```
+
+**Entire stock valuation in one formula.**
+
+### With Numbers
+
+```
+D_{t+1} = $5, g = 3%, k = 8%
+
+V = $5 / (0.08 - 0.03) = $5 / 0.05 = $100
+```
+
+### Sensitivity (Why Small Changes Matter Enormously)
+
+```
+Higher dividend ($7):    V = $7/0.05  = $140   (+40%)
+Higher growth (g=5%):    V = $5/0.03  = $167   (+67%)
+Higher risk (k=12%):     V = $5/0.09  = $56    (-44%)
+```
+
+**Small changes in g or k → huge changes in V.** This is why valuation is art + science.
+
+### Why k > g Must Hold
+
+If g ≥ k, the formula gives infinity. Economically: no company grows faster than the economy forever. In practice g = 2-4% (GDP growth), k = 6-12%.
+
+### D Means More Than Just Dividends
+
+Pedersen's important note: D includes dividends + share buybacks - new shares issued = total free cash flow to shareholders. Apple pays small dividends but buys back $90B/year of stock. The buyback IS a dividend.
+
+### Margin of Safety (The Buffett Rule)
+
+```
+Margin of Safety = (V - P) / V
+
+V = $187 (your DCF estimate)
+P = $173 (market price)
+MoS = ($187 - $173) / $187 = 7.5%
+
+Buffett: only buy when MoS > 20-30% to protect against errors in D, k, and g.
+```
+
+### Alpha Lab Connection
+
+The Fundamentalist agent runs this exact model: estimates future cash flows, discounts at appropriate k, computes margin of safety. "DCF $187, price $173, MoS 8%" — that's the Gordon model in action.
+
+---
+
 *Last updated: April 11, 2026. Add more questions as you read.*
