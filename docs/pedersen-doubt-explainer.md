@@ -609,4 +609,197 @@ When someone shows you β ≈ 0 and high alpha, ask: **"Are the prices real-time
 
 ---
 
+## Q13: Chapter 3 — Where do hedge fund profits come from? (Pages 39-53)
+
+### The Two Sources of All Hedge Fund Profits
+
+```
+                    Profit Sources
+                    ┌─────┴─────┐
+           Compensation for    Compensation for
+           LIQUIDITY RISK      INFORMATION
+```
+
+Either you're paid for **taking a risk nobody else wants** (liquidity) or **knowing something others don't** (information). Every strategy falls into one or both.
+
+### Information Advantages
+
+**Production of information**: You do research others didn't. Read 10-K filings, talk to suppliers, model the business. Your Alpha Lab's Fundamentalist and Sentiment agents do this.
+
+**Access to information**: You see data before others (legally). Call doctors about prescription trends, process SEC filings the moment they publish. Your Alpha Lab's RAG pipeline does this.
+
+**News that travels slowly**: Markets underreact initially to news, then drift. Post-earnings-announcement drift is the classic example — stock jumps 3% on earnings day, then drifts another 4% over 2 weeks. Your Momentum strategy exploits this.
+
+### Liquidity Risk
+
+**Market liquidity risk**: You can't sell when you need to. "They'll let you in, but they won't let you out." During 2008, bond bid-ask spreads went from 1% to 5%+. Some had NO bids. Funds that hold illiquid stuff earn a premium for this risk (Harvard's endowment targets 300bps/year for illiquidity).
+
+**Funding liquidity risk**: You run out of cash to maintain leveraged positions. Prices drop → margin calls → forced selling → prices drop more → more margin calls. This **liquidity spiral** killed LTCM and accelerated 2008.
+
+**Demand pressure**: Some investors MUST trade regardless of price (index funds rebalancing, options hedgers, panic sellers). A contrarian profits by taking the other side — buying what's being dumped, selling what's being chased.
+
+### The Limits of Arbitrage (Why Mispricings Persist)
+
+Three reasons smart money can't instantly fix every mispricing:
+
+1. **Fundamental risk**: You buy an undervalued oil company. An oil rig explodes. Right thesis, wrong outcome.
+2. **Noise trader risk**: You buy cheap stock. Panic sellers push it cheaper. You're right but losing money. "The market can stay irrational longer than you can stay solvent."
+3. **Bubble riding**: Sometimes it's rational to NOT fight a mispricing. If Tesla keeps going up, shorting is painful even if you're right.
+
+Conclusion: Markets are **efficiently inefficient** — inefficient enough to reward research, efficient enough to make it hard.
+
+### Backtesting (Section 3.3)
+
+A backtest needs: Universe, Signals, Trading rule, Time lags. Common biases:
+- **Survivorship bias**: Using today's S&P 500 for 2010 backtests
+- **Look-ahead bias**: Using data you didn't have yet
+- **In-sample cheating**: Optimizing and testing on the same data
+
+### The Metatheorem (Section 3.4)
+
+Every regression IS a trading strategy. Every trading strategy IS a regression.
+- Regression coefficient b = strategy's average profit
+- t-statistic of b ≈ Sharpe ratio × √T
+- A significant regression = a profitable strategy
+
+---
+
+## Q14: Chapter 4 — Portfolio Construction and Risk Management (Pages 54-62)
+
+### The Six Principles of Portfolio Construction
+
+Pedersen lists the principles every successful hedge fund follows:
+
+**1. Diversification is the only free lunch.**
+
+You've heard this before. But Pedersen's student example makes it visceral: MBA students are given a perfect arbitrage trade. Most invest 40%+ of capital in it. The following week, almost every student blows up — the position moved against them temporarily and they couldn't meet margin. The ones who survived? Those who invested <5%.
+
+**2. Position limits.**
+
+No single position should be more than 5% of your portfolio. James Chanos (legendary short seller) trims positions as they approach this limit. Even if you're right about a stock, a 40% position that moves against you 20% wipes out 8% of your fund. A 5% position with the same move costs only 1%.
+
+**3. Bet bigger on higher conviction trades.**
+
+Not all positions should be equal. If you have 80% confidence in NVDA and 55% confidence in AAPL, NVDA should be a larger position. Size according to confidence — but within the position limits above.
+
+**4. Think about risk in terms of position size AND underlying risk.**
+
+A $10M position in a low-volatility utility stock is LESS risky than a $5M position in a high-volatility biotech. Risk = dollars × volatility, not just dollars.
+
+**5. Correlations matter.**
+
+A long position that's highly correlated with your other longs is BAD — it's concentrated risk disguised as diversification. A long position correlated with your shorts is GOOD — natural hedge. Lee Ainslie (Maverick Capital) deliberately has longs and shorts in the same industry to reduce sector risk.
+
+**6. Continuously resize positions.**
+
+"Hold" is not an option. As your P&L changes, your position sizes should change too. A losing position that you don't cut becomes a larger percentage of your shrinking portfolio — it grows in risk even though you did nothing. "A trader must have no memory and forget nothing."
+
+### Mean-Variance Optimization (The Math)
+
+This is the formal way to combine the six principles into an algorithm.
+
+**The problem**: Choose portfolio weights x to maximize return minus a penalty for risk:
+
+```
+Maximize: x'E(R^e) - (γ/2) x'Ωx
+           ↑              ↑
+      expected return   risk penalty
+```
+
+Where:
+- x = vector of position sizes (how much in each stock)
+- E(R^e) = vector of expected excess returns
+- Ω = covariance matrix (how all stocks move together)
+- γ = risk aversion (how much you hate risk — higher γ = more conservative)
+
+**The solution**:
+
+```
+x* = γ⁻¹ Ω⁻¹ E(R^e)
+```
+
+In English: invest more in stocks with HIGH expected returns, LOW variance, and LOW correlation with other stocks. The covariance matrix Ω captures all the interaction effects.
+
+**Why this breaks in practice** (Pedersen is honest about this):
+
+1. **Estimation error amplification**: Small errors in expected return estimates → huge errors in optimal weights. The optimizer is an "error maximizer" — it overweights stocks with overestimated returns.
+
+2. **Extreme positions**: The optimizer might say "put 200% in stock A and -150% in stock B." Theoretically optimal, practically insane.
+
+3. **No transaction costs**: The optimizer rebalances every period assuming trading is free. In reality, turnover costs money.
+
+**Fixes the industry uses**:
+- **Shrinkage**: Pull extreme estimates toward the average (Ledoit-Wolf)
+- **Constraints**: Maximum position sizes, sector limits, turnover limits
+- **Robust optimization**: Assume you DON'T know the exact returns, optimize for the worst case within your uncertainty
+- **Black-Litterman**: Start from market equilibrium weights, then tilt based on your views
+
+### Risk Management (Section 4.2)
+
+#### Measuring Risk
+
+**Volatility (σ)**: The standard measure. But Pedersen warns: for normal distributions, 2σ events are rare. For real hedge funds, 2σ events happen regularly and 5σ events do happen. Volatility understates tail risk.
+
+**Value at Risk (VaR)**: The maximum you can lose at a given confidence. "95% VaR of $10M" means "95% of days, you lose less than $10M." But VaR has a flaw — it doesn't tell you HOW MUCH you lose in the bad 5%.
+
+**Expected Shortfall (ES)**: Fixes VaR's flaw. ES = the average loss on days when you exceed VaR. If VaR is $10M but on bad days you lose $50M on average, ES = $50M. Much more informative than VaR alone.
+
+**Stress Tests**: Simulate specific crisis scenarios — 2008 crash, Lehman bankruptcy, COVID, rate spike. "What would happen to our portfolio if 2008 repeated?" This catches risks that statistical measures miss because some events are unprecedented.
+
+#### Managing Risk
+
+**Risk limits**: Maximum VaR or volatility the fund will take, at fund level and per strategy.
+
+**Position limits**: Maximum dollars in any single position, regardless of how good the idea is.
+
+**Strategic risk target**: The long-term average volatility the fund wants (e.g., 10% annualized). The fund adjusts positions to maintain this target.
+
+**Tactical risk**: The fund may deviate from the strategic target based on opportunities. More risk when opportunities are abundant, less when markets are dangerous.
+
+### Drawdown Control (Section 4.3)
+
+The most important risk management concept for hedge funds that use leverage.
+
+**The rule**:
+
+```
+VaR_today ≤ MADD - DD_today
+
+"Your risk must be less than your remaining drawdown budget"
+```
+
+If your Maximum Acceptable Drawdown (MADD) is 25% and you're currently 15% below peak:
+- Remaining budget = 25% - 15% = 10%
+- Your VaR must be ≤ 10%
+- If VaR is 12%: you MUST reduce positions to bring VaR below 10%
+
+**Why this exists**: Leveraged funds can't "ride out" a crisis. If drawdown hits a certain level:
+- Investors redeem (take their money back)
+- Prime brokers increase margin requirements
+- The fund is forced to sell at the worst time
+
+A drawdown policy creates a plan BEFORE the crisis. "Your first loss is your least loss."
+
+**Pedersen's trader wisdom**:
+- "Never panic, but if you are going to panic, panic first."
+- "The strongest weak hand suffers the largest loss." (Leveraged funds that hold too long get the worst exits)
+
+### How Chapter 4 Connects to Your Alpha Lab
+
+| Pedersen Concept | Alpha Lab Implementation |
+|---|---|
+| Mean-variance optimization | `portfolio/optimization/optimizer.py → mean_variance()` |
+| Position limits | `risk/manager.py → max_position_pct = 10%` |
+| HRP (robust alternative to MV) | `portfolio/optimization/optimizer.py → hierarchical_risk_parity()` |
+| VaR | `analytics/returns.py → compute_var()` + `risk/var/monte_carlo.py` |
+| Expected Shortfall | `analytics/returns.py → compute_cvar()` |
+| Drawdown control | `risk/monitoring/circuit_breaker.py → DrawdownMonitor` |
+| Risk limits | `config/settings.py → RiskSettings` |
+| Kelly sizing | `risk/position_sizing/engine.py → kelly_criterion()` |
+| Risk parity | `risk/position_sizing/engine.py → risk_parity()` |
+
+The Risk Manager agent combines ALL of these: it evaluates every proposed signal against position limits, portfolio VaR, drawdown budget, and Kelly sizing before approving. This is Chapter 4 in code.
+
+---
+
 *Last updated: April 11, 2026. Add more questions as you read.*
