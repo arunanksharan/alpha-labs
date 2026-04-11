@@ -1,5 +1,19 @@
 # Essential Research Papers for Quant Researcher Credibility
 
+## Tier 0: López de Prado's Latest (2025-2026) — Interview Gold
+
+These are from [quantresearch.org](https://www.quantresearch.org/Publications.htm) — López de Prado's latest work at ADIA (Abu Dhabi Investment Authority). Mentioning these in an interview shows you're current.
+
+| Paper | Year | Why It Matters | Link |
+|-------|------|---------------|------|
+| **Implementing AI Foundation Models in Asset Management: A Practical Guide** | 2025 | DIRECTLY relevant to Head of AI role. How funds actually implement LLMs. | [PM Research](https://www.pm-research.com/content/iijpormgmt/52/2/11) (paywall) |
+| **Ten Applications of Financial Machine Learning** | 2025 | Practical ML applications for asset managers. | [SSRN](https://ssrn.com/abstract=3365271) (free) |
+| **Why Has Factor Investing Failed? / Correcting the Factor Mirage** | 2026 | Specification errors in factor investing. Causal approach. | [SSRN](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4697929) (free) |
+| **How to Use the Sharpe Ratio: Inference, New Standard** | 2026 | Latest on Sharpe ratio methodology. 44-page definitive guide. | [SSRN](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5520741) (free) |
+| **The Three Types of Backtests** | 2024 | Enhanced backtesting for practitioners. | [SSRN](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4897573) (free) |
+| **Causal Factor Investing** | 2023 | Book: why correlation-based factors fail, causal approach. | [SSRN](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4205613) (free) |
+| **The 10 Reasons Most Machine Learning Funds Fail** | 2018 | THE paper on ML fund failures. Read before any interview. | [SSRN](https://ssrn.com/abstract=3104816) (free) |
+
 ## Tier 1: Must-Read (Implement at least 1-2 in Alpha Lab)
 
 ### ML for Cross-Sectional Returns
