@@ -299,4 +299,78 @@ A fund with high SR and zero IR is just the market with fees. SR flatters it, IR
 
 ---
 
+## Q8: Sortino Ratio — why only downside risk? What is the indicator function? (Page 32)
+
+### The Problem Sortino Solves
+
+Sharpe treats ALL volatility as bad. But if your fund returned +15% one month and +2% the next, Sharpe penalizes the +15% month. As an investor, you're not complaining about +15%. That's a good surprise.
+
+**Sortino says: only penalize the bad surprises.**
+
+### Built With Numbers
+
+Two funds, 12 months:
+
+```
+Fund A: +2%, +3%, +1%, -4%, +2%, +5%, -1%, +3%, +2%, -3%, +4%, +1%
+Fund B: +8%, +1%, -2%, +10%, -1%, +3%, +12%, +0%, -3%, +7%, +2%, +1%
+```
+
+Both average ~1.25% monthly excess return.
+
+**Sharpe** (uses total volatility):
+```
+Fund A: σ = 2.7%  →  SR = 1.25/2.7 = 0.46
+Fund B: σ = 4.8%  →  SR = 1.25/4.8 = 0.26
+Sharpe says A is better.
+```
+
+But Fund B's extra volatility is mostly from big UP months (+8%, +10%, +12%). The down months are similar to Fund A.
+
+**Sortino** (uses only downside volatility):
+
+Step 1 — Set MAR = 0% (minimum acceptable return)
+
+Step 2 — Filter with indicator function 1_{R < MAR}:
+```
+Fund A: kept -4%, -1%, -3%     → downside σ ≈ 2.5%
+Fund B: kept -2%, -1%, -3%     → downside σ ≈ 1.6%
+```
+
+Step 3 — Compute:
+```
+Sortino A = 1.25% / 2.5% = 0.50
+Sortino B = 1.25% / 1.6% = 0.78
+Sortino says B is better.
+```
+
+Fund B's downside is actually SMALLER. The extra volatility was all upside.
+
+### The Indicator Function 1_{R < MAR}
+
+A gate that filters returns:
+
+```
+1_{R < MAR} = 1  if return is BELOW the minimum (keep it — it's a loss)
+1_{R < MAR} = 0  if return is ABOVE the minimum (ignore it — it's fine)
+
+R × 1_{R<MAR}:
+  Month with R = -4%:  -4% × 1 = -4%  (kept)
+  Month with R = +8%:  +8% × 0 =  0%  (ignored)
+```
+
+Take std dev of this filtered series → that's σ_downside.
+
+### Pedersen's Key Point
+
+**Sortino assumes**: You don't care whether you make 5% each year or 1% then 9%. Both average 5%, both have zero losses. Identical Sortino.
+
+**Sharpe assumes**: You PREFER 5% each year. The 1%/9% path is "riskier" even though you never lost money.
+
+### In Practice
+
+Report both. A strategy where Sortino >> Sharpe has **positive skew** — surprises tend to be upside. That's a feature, not a bug.
+
+---
+
 *Last updated: April 11, 2026. Add more questions as you read.*
