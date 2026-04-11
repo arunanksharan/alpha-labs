@@ -1089,4 +1089,78 @@ The optimizer needs precise E(R^e) estimates. Small errors get AMPLIFIED by Ω�
 
 ---
 
+## Q19: Value at Risk (VaR) — what it is, how to compute it, and why it lies (Pages 58-59)
+
+### What VaR Answers
+
+Your investor asks: "What's the MOST I can lose on a bad day?"
+
+VaR: "95% of days, you'll lose LESS than $10M. Only the worst 5% of days could be worse."
+
+VaR is a threshold — the boundary between "normal bad" and "really bad."
+
+### Computing VaR: Sort and Count
+
+100 trading days. Sort P&L from worst to best:
+
+```
+Day 73:  -$15M  ← worst
+Day 12:  -$12M
+Day 45:  -$11M
+Day 91:  -$9M
+Day 8:   -$8M  ← 5th worst = 5th percentile
+─────────────── 95% VaR line ($8M) ───
+Day 34:  -$7M
+...95 better days...
+```
+
+95% VaR = $8M. On 95 of 100 days, you lost less than $8M.
+
+### Three Methods
+
+**Historical**: Sort past returns, find the cutoff. Simple, no assumptions. But breaks if positions changed.
+
+**Parametric**: VaR = -μ + z×σ (z=1.645 for 95%). Fast but assumes normal distribution — underestimates fat tails.
+
+**Monte Carlo**: Simulate 10,000 scenarios with current positions, sort outcomes. Best accuracy but computationally heavy.
+
+### VaR's Critical Flaw
+
+VaR tells you the THRESHOLD but not what happens beyond it.
+
+```
+Fund A: VaR = $10M. Worst 5% of days: lose $11-12M
+Fund B: VaR = $10M. Worst 5% of days: lose $50-100M
+
+Same VaR. Completely different real risk.
+```
+
+**Expected Shortfall (ES) fixes this**: ES = average loss on days EXCEEDING VaR. Fund A ES = $11.5M. Fund B ES = $75M. ES reveals what VaR hides.
+
+### The "Positions Changed" Trap
+
+Pedersen warns this is misleading:
+
+```
+Last month: conservative bonds. Historical VaR = $2M.
+This week: switched to leveraged tech stocks.
+Historical VaR still says $2M — but actual risk is $10M.
+```
+
+The VaR is based on OLD positions but you're holding NEW ones. Fix: apply historical market moves to CURRENT positions ("what would my current portfolio have lost on each past day?").
+
+### How Hedge Funds Actually Use VaR
+
+```
+Risk Manager: "VaR is $8.2M. Limit is $10M. Budget remaining: $1.8M."
+PM: "I want $50M in NVDA."
+Risk Manager: "VaR would jump to $11.1M. Over limit. Reduce to $30M."
+PM: "Fine."
+Risk Manager: "New VaR: $9.5M. Approved."
+```
+
+Always report VaR AND Expected Shortfall together. VaR alone is dangerously incomplete.
+
+---
+
 *Last updated: April 11, 2026. Add more questions as you read.*
