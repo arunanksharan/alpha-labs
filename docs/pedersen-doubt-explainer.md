@@ -494,4 +494,119 @@ This is why SR is the universal language of hedge funds — it encodes everythin
 
 ---
 
+## Q11: HWM, Drawdown, and MDD — what are they and why do they matter? (Pages 35-36)
+
+### High Water Mark (HWM) — Your Personal Best
+
+HWM = the highest value a fund has ever reached. It only moves UP, never down.
+
+```
+Month 1:  $100 → $110    HWM = $110 (new high)
+Month 2:  $110 → $120    HWM = $120 (new high)
+Month 3:  $120 → $105    HWM = $120 (stays — didn't beat it)
+Month 4:  $105 → $115    HWM = $120 (still below peak)
+Month 5:  $115 → $125    HWM = $125 (new high!)
+```
+
+**Why it matters for fees**: Hedge funds charge 20% of profits, but only on profits ABOVE the HWM. If a fund drops from $120 to $105, it earns zero performance fees until it gets back above $120. This prevents charging fees on "recovering losses."
+
+### Drawdown (DD) — How Deep in the Hole
+
+```
+DD_t = (HWM_t - P_t) / HWM_t
+```
+
+How far you've fallen from your peak, as a percentage.
+
+```
+P=$120, HWM=$120  →  DD = 0%     (at peak)
+P=$105, HWM=$120  →  DD = 12.5%  (down 12.5% from peak)
+P=$115, HWM=$120  →  DD = 4.2%   (recovering but still below)
+P=$125, HWM=$125  →  DD = 0%     (new peak, drawdown over)
+```
+
+### Maximum Drawdown (MDD) — The Worst Pain Ever
+
+```
+MDD = the largest DD that has ever occurred
+```
+
+MDD never resets. If you were once 25% below peak, MDD = 25% forever. It's the fund's worst moment on record.
+
+**Why MDD matters more than volatility**: A 25% drawdown means investors see $1M become $750K. They panic, redeem, and the fund sells at the worst time. A PM who draws down 20%+ often gets fired.
+
+### The Drawdown Control Rule (from Ch. 4)
+
+```
+VaR ≤ MADD - DD
+
+"Risk budget = max acceptable drawdown minus current drawdown"
+
+If MADD = 25% and you're already 15% down:
+  Remaining budget = 10%. Reduce positions.
+```
+
+---
+
+## Q12: The Stale Price Trick — how fake alpha appears from lagged reporting (Pages 36-37)
+
+### The Setup
+
+Late Capital Management (LCM) does the simplest thing possible — invests 100% in the S&P 500. Zero skill. But it reports returns **one month late**. January's return appears in February's numbers.
+
+### Why This Breaks Beta
+
+When you regress LCM's February return against the market's February return, you're actually comparing:
+
+```
+LCM's February number = January's market return
+Market's February number = February's market return
+
+cov(January market, February market) ≈ 0
+(markets don't remember last month)
+```
+
+The regression sees no relationship. It concludes β ≈ 0.
+
+### Where Fake Alpha Comes From
+
+With β ≈ 0:
+
+```
+R_LCM = α + 0 × R_market + ε
+```
+
+The regression attributes ALL returns to alpha. The stock market earns ~7% above risk-free historically. So α ≈ 7%. LCM appears to have 7% alpha with zero market exposure.
+
+**But it's completely fake.** LCM is just the market with a reporting lag.
+
+### Why This Happens in Real Life
+
+Funds that hold illiquid securities (private equity, distressed debt, real estate, OTC derivatives) have STALE prices — values from days or weeks ago. When the market crashes today, their positions still show yesterday's higher prices.
+
+```
+Day 1: Market -5%. Liquid fund shows -5%. Illiquid fund shows 0% (stale).
+Day 2: Market +2%. Liquid fund shows +2%. Illiquid fund shows -5% (delayed).
+```
+
+The illiquid fund's lagged returns make beta look low and alpha look high. Same risk, hidden by pricing delays.
+
+### Pedersen's Fix: Lagged Beta Regression
+
+Add lagged market returns to the regression:
+
+```
+R_t = α_adj + β⁰R_mkt_t + β¹R_mkt_{t-1} + ... + β^L R_mkt_{t-L} + ε
+
+True beta = β⁰ + β¹ + ... + β^L
+```
+
+For LCM: β⁰ ≈ 0 but β¹ ≈ 1.0. So true β = 1.0 and α_adjusted ≈ 0. Correct — no skill.
+
+### The Lesson
+
+When someone shows you β ≈ 0 and high alpha, ask: **"Are the prices real-time or stale?"** Low beta from illiquid assets is often fake hedging, not real hedging.
+
+---
+
 *Last updated: April 11, 2026. Add more questions as you read.*
