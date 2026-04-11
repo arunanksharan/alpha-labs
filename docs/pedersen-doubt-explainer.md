@@ -959,4 +959,134 @@ This shows you understand options, delta, gamma, microstructure, AND system desi
 
 ---
 
+## Q17: The Metatheorem — a regression IS a trading strategy (Pages 51-53)
+
+The OLS regression coefficient b̂ = Σ(F_t - F̄)R_{t+1} / Σ(F_t - F̄)² is not just a statistic — it's the total profit of a long-short trading strategy.
+
+**The trading position**: x_t = k(F_t - F̄) where k = 1/Σ(F_t - F̄)²
+
+- Signal above average → go LONG (proportional to signal strength)
+- Signal below average → go SHORT
+- Signal at average → do NOTHING
+
+**Total strategy profit** = Σ x_t × R_{t+1} = b̂. The regression coefficient IS the strategy profit.
+
+**Sharpe ratio** of the strategy = b̂/σ̂ and **t-statistic** = √T × b̂/σ̂ = √T × SR.
+
+A statistically significant regression (t > 2) = a profitable trading strategy. Every regression is secretly a backtest.
+
+---
+
+## ⭐ Q18: Mean-Variance Optimization — the vector math explained (Page 56-57)
+
+*This is critical for interviews. Understand both the intuition AND the math.*
+
+### Starting With Numbers (No Vectors)
+
+Two stocks. A: expected return 8%, vol 20%. B: expected return 4%, vol 10%. Correlation 0.3.
+
+```
+Portfolio return  = x_A × 8% + x_B × 4%
+Portfolio variance = x_A² × (20%)² + x_B² × (10%)² + 2 × x_A × x_B × 0.3 × 20% × 10%
+```
+
+Optimization: maximize [return] - (γ/2) × [variance].
+
+Plain calculus: take derivative with respect to x_A and x_B, set to zero, solve 2 equations.
+
+**With 500 stocks, you'd have 500 equations. Vector notation writes them all at once.**
+
+### What Each Vector/Matrix Means
+
+```
+x = [x_A]     → dollars in each stock (your POSITIONS)
+    [x_B]
+
+E(R^e) = [0.08]  → expected excess return of each stock
+         [0.04]
+
+Ω = [0.04   0.006]  → covariance matrix (how stocks co-move)
+    [0.006  0.01 ]     diagonal = variances, off-diagonal = covariances
+```
+
+### What the Operations Mean
+
+**x'E(R^e)** = portfolio expected return:
+```
+[x_A, x_B] × [0.08] = x_A×0.08 + x_B×0.04
+              [0.04]
+Just "multiply each position by its return and add up."
+```
+
+**x'Ωx** = portfolio variance:
+```
+Step 1: Ωx = [0.04×x_A + 0.006×x_B]
+             [0.006×x_A + 0.01×x_B]
+
+Step 2: x'(Ωx) = x_A×(0.04×x_A + 0.006×x_B) + x_B×(0.006×x_A + 0.01×x_B)
+               = x_A²×0.04 + 2×x_A×x_B×0.006 + x_B²×0.01
+
+Same as the variance formula above. x'Ωx is just a compact way to write it.
+```
+
+### The Optimization
+
+```
+Maximize: x'E(R^e) - (γ/2) x'Ωx
+          [return]     [risk penalty]
+```
+
+γ = risk aversion. Higher γ = more conservative.
+
+### The Differentiation (Where People Get Lost)
+
+Two rules for vector calculus:
+```
+d/dx [x'E(R^e)] = E(R^e)         (like d/dx[ax] = a)
+d/dx [x'Ωx]     = 2Ωx            (like d/dx[ax²] = 2ax)
+```
+
+**Why 2Ωx?** Write it out for 2 stocks. The variance is x_A²×0.04 + 2×x_A×x_B×0.006 + x_B²×0.01.
+
+Derivative w.r.t. x_A: 2×x_A×0.04 + 2×x_B×0.006 = 2×[0.04×x_A + 0.006×x_B]
+Derivative w.r.t. x_B: 2×x_B×0.01 + 2×x_A×0.006 = 2×[0.006×x_A + 0.01×x_B]
+
+Stack them:
+```
+[2×(0.04×x_A + 0.006×x_B)]  = 2 × [0.04  0.006] × [x_A] = 2Ωx
+[2×(0.006×x_A + 0.01×x_B)]      [0.006 0.01 ]   [x_B]
+```
+
+So d/dx[x'Ωx] = 2Ωx. The 2 cancels with the 1/2 in (γ/2).
+
+### Setting derivative to zero:
+
+```
+E(R^e) - γΩx = 0
+γΩx = E(R^e)
+x = γ⁻¹ × Ω⁻¹ × E(R^e)
+```
+
+### What Ω⁻¹ Means
+
+Ω tells you "how stocks move together." Ω⁻¹ tells you "how to UNTANGLE correlated stocks into independent bets."
+
+Multiplying by Ω⁻¹ gives MORE weight to stocks that provide diversification and LESS weight to stocks that are redundant (highly correlated with others).
+
+### The Solution in English
+
+```
+x = (1/risk_aversion) × (untangle_correlations) × (expected_returns)
+```
+
+1. Start with expected returns
+2. Adjust for correlations (Ω⁻¹ boosts diversifying stocks)
+3. Scale by aggressiveness (1/γ)
+
+### Why It Breaks in Practice
+
+The optimizer needs precise E(R^e) estimates. Small errors get AMPLIFIED by Ω⁻¹. With 500 stocks, tiny estimation errors → insane positions. This is why HRP, shrinkage, and constraints exist.
+
+---
+
 *Last updated: April 11, 2026. Add more questions as you read.*
