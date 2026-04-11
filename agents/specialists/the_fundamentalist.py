@@ -193,17 +193,79 @@ class TheFundamentalist:
         details["discount_rate"] = discount_rate
         details["dcf_total"] = round(dcf_value, 2)
 
-        # Step 5 -- signal
+        # Step 5 -- Value ratios (Fama-French style)
+        # Pedersen Ch.9: k = CF/P + g, so any CF/P ratio predicts returns.
+        # These are the systematic quant signals that complement the DCF.
+
+        earnings_yield = (net_income / shares / current_price) if (shares > 0 and current_price > 0) else 0.0  # E/P
+        book_to_price = (total_equity / shares / current_price) if (shares > 0 and current_price > 0) else 0.0  # B/P (HML factor)
+
+        # Dividend yield — estimate as 30% of earnings (payout ratio)
+        estimated_dividend = net_income * 0.3 / shares if shares > 0 else 0.0
+        dividend_yield = estimated_dividend / current_price if current_price > 0 else 0.0  # D/P
+
+        # Gordon expected return: k = D/P + g
+        gordon_expected_return = dividend_yield + growth_rate
+
+        thoughts.append(
+            f"Value ratios: E/P={earnings_yield:.2%}, B/P={book_to_price:.2f}, "
+            f"D/P={dividend_yield:.2%}"
+        )
+        thoughts.append(
+            f"Gordon expected return: {gordon_expected_return:.2%} "
+            f"(D/P {dividend_yield:.2%} + growth {growth_rate:.2%})"
+        )
+
+        details["earnings_yield"] = round(earnings_yield * 100, 2)
+        details["book_to_price"] = round(book_to_price, 4)
+        details["dividend_yield"] = round(dividend_yield * 100, 2)
+        details["gordon_expected_return"] = round(gordon_expected_return * 100, 2)
+
+        # HML signal: is this stock "value" or "growth"?
+        # B/P > 1.0 is deep value. B/P < 0.3 is expensive growth.
+        if book_to_price > 0.8:
+            hml_signal = "deep value (cheap)"
+        elif book_to_price > 0.4:
+            hml_signal = "moderate value"
+        elif book_to_price > 0.2:
+            hml_signal = "growth"
+        else:
+            hml_signal = "expensive growth"
+        details["hml_classification"] = hml_signal
+        thoughts.append(f"Fama-French HML classification: {hml_signal} (B/P={book_to_price:.2f})")
+
+        # Step 6 -- signal (combines DCF + value ratios)
+        # DCF margin of safety is the primary signal.
+        # Value ratios provide confirmation.
+        value_confirmation = (earnings_yield > 0.05 or book_to_price > 0.5)  # cheap by ratio standards
+
         if margin_of_safety > 10:
             signal = "bullish"
+            if value_confirmation:
+                thoughts.append("Value ratios CONFIRM: stock is cheap by both DCF and ratio measures.")
         elif margin_of_safety < -10:
             signal = "bearish"
+            if not value_confirmation:
+                thoughts.append("Value ratios CONFIRM: stock is expensive by both DCF and ratio measures.")
         else:
-            signal = "neutral"
+            # DCF is neutral — let value ratios break the tie
+            if value_confirmation and earnings_yield > 0.06:
+                signal = "bullish"
+                thoughts.append("DCF neutral but value ratios suggest cheapness — tilting bullish.")
+            elif earnings_yield < 0.02 and book_to_price < 0.2:
+                signal = "bearish"
+                thoughts.append("DCF neutral but value ratios suggest expensiveness — tilting bearish.")
+            else:
+                signal = "neutral"
 
-        # Step 6 -- confidence
+        # Step 7 -- confidence
         mos_factor = min(abs(margin_of_safety) / 50.0, 1.0)
-        confidence = data_quality * mos_factor
+        # Boost confidence when DCF and value ratios agree
+        ratio_agreement_boost = 0.1 if (
+            (signal == "bullish" and value_confirmation) or
+            (signal == "bearish" and not value_confirmation)
+        ) else 0.0
+        confidence = data_quality * mos_factor + ratio_agreement_boost
         confidence = max(0.0, min(1.0, confidence))
         thoughts.append(f"Signal: {signal} (confidence {confidence:.2f})")
 
@@ -213,8 +275,10 @@ class TheFundamentalist:
         details["end_date"] = end_date
 
         reasoning = (
-            f"Fundamental DCF analysis yields intrinsic value ${intrinsic_per_share:.2f} "
-            f"vs price ${current_price:.2f} ({signal}, margin of safety {margin_of_safety:.1f}%)."
+            f"Fundamental analysis: DCF intrinsic value ${intrinsic_per_share:.2f} "
+            f"vs price ${current_price:.2f} (MoS {margin_of_safety:.1f}%). "
+            f"Value ratios: E/P={earnings_yield:.2%}, B/P={book_to_price:.2f} ({hml_signal}). "
+            f"Gordon expected return: {gordon_expected_return:.2%}. Signal: {signal}."
         )
 
         return AgentFinding(
