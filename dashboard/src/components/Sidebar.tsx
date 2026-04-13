@@ -68,7 +68,7 @@ export default function Sidebar({ onNavigate }: { onNavigate?: () => void } = {}
           const normalizedPath = pathname.replace(BASE_PATH, "") || "/";
           const active = normalizedPath === href;
           return (
-            <Link
+            <a
               key={href}
               href={`${BASE_PATH}${href}`}
               onClick={onNavigate}
@@ -93,7 +93,7 @@ export default function Sidebar({ onNavigate }: { onNavigate?: () => void } = {}
                   </motion.span>
                 )}
               </AnimatePresence>
-            </Link>
+            </a>
           );
         })}
       </nav>
