@@ -450,3 +450,258 @@ def _is_classification(y: np.ndarray) -> bool:
     """Heuristic: treat as classification if target has few unique values."""
     unique = np.unique(y)
     return len(unique) <= 20 and np.all(unique == unique.astype(int))
+
+
+# ---------------------------------------------------------------------------
+# LLM-as-Judge Backtest Validation
+# ---------------------------------------------------------------------------
+
+import json
+import logging
+import os
+
+import anthropic
+
+from core.backtest import BacktestResult
+
+logger = logging.getLogger(__name__)
+
+_LLM_SYSTEM_PROMPT = """\
+You are a senior quantitative researcher at a $10B+ systematic fund.
+Your job is to critically evaluate backtests before they go to the PM.
+You are deliberately skeptical — false positives cost the fund millions.
+You have seen hundreds of backtests that looked great in-sample and failed live.
+
+Evaluate this backtest with extreme scrutiny. Flag every concern.
+If it's genuinely strong, say so — but don't flatter.
+
+Respond ONLY with valid JSON matching this schema:
+{
+    "overall_assessment": "PASS" | "CAUTION" | "FAIL",
+    "confidence": <float 0.0-1.0>,
+    "concerns": [<list of specific concerns>],
+    "strengths": [<list of genuine strengths>],
+    "regime_risk": "<description of regime-dependent risks>",
+    "recommendation": "<one paragraph honest assessment>"
+}
+"""
+
+
+@dataclass
+class LLMValidationResult:
+    """Result from LLM-based backtest peer review."""
+
+    overall_assessment: str  # "PASS", "CAUTION", "FAIL"
+    confidence: float  # 0.0 to 1.0
+    concerns: list[str]
+    strengths: list[str]
+    regime_risk: str
+    recommendation: str
+    raw_response: dict  # Full LLM response for debugging
+    model_used: str
+
+
+def _format_backtest_prompt(
+    backtest_result: BacktestResult,
+    validation_result: ValidationResult | None = None,
+) -> str:
+    """Format backtest metrics into a clear prompt for the LLM reviewer."""
+    lines = [
+        "## Backtest Under Review",
+        "",
+        f"**Strategy**: {backtest_result.strategy_name}",
+        f"**Period**: {backtest_result.start_date} to {backtest_result.end_date}",
+        "",
+        "### Core Performance Metrics",
+        f"- Total Return: {backtest_result.total_return:.4f}",
+        f"- Annualized Return: {backtest_result.annualized_return:.4f}",
+        f"- Sharpe Ratio: {backtest_result.sharpe_ratio:.4f}",
+        f"- Sortino Ratio: {backtest_result.sortino_ratio:.4f}",
+        f"- Max Drawdown: {backtest_result.max_drawdown:.4f}",
+        f"- Calmar Ratio: {backtest_result.calmar_ratio:.4f}",
+        f"- Win Rate: {backtest_result.win_rate:.4f}",
+        f"- Profit Factor: {backtest_result.profit_factor:.4f}",
+        "",
+        "### Risk Metrics",
+    ]
+
+    if backtest_result.var_95 is not None:
+        lines.append(f"- VaR (95%): {backtest_result.var_95:.4f}")
+    if backtest_result.cvar_95 is not None:
+        lines.append(f"- CVaR (95%): {backtest_result.cvar_95:.4f}")
+    if backtest_result.information_ratio is not None:
+        lines.append(f"- Information Ratio: {backtest_result.information_ratio:.4f}")
+    if backtest_result.beta is not None:
+        lines.append(f"- Beta: {backtest_result.beta:.4f}")
+    if backtest_result.alpha is not None:
+        lines.append(f"- Alpha: {backtest_result.alpha:.4f}")
+
+    lines.extend([
+        "",
+        "### Execution Assumptions",
+        f"- Transaction Costs: {backtest_result.transaction_costs}",
+        f"- Slippage Model: {backtest_result.slippage_model}",
+    ])
+
+    # Include trade and equity curve summary
+    n_trades = backtest_result.trades.height
+    n_days = backtest_result.equity_curve.height
+    lines.extend([
+        "",
+        "### Data Summary",
+        f"- Number of Trades: {n_trades}",
+        f"- Equity Curve Length (days): {n_days}",
+    ])
+
+    if backtest_result.metadata:
+        lines.extend([
+            "",
+            "### Strategy Metadata",
+        ])
+        for key, value in backtest_result.metadata.items():
+            lines.append(f"- {key}: {value}")
+
+    # Append statistical validation if available
+    if validation_result is not None:
+        lines.extend([
+            "",
+            "### Statistical Validation (Deflated Sharpe Ratio)",
+            f"- Deflated Sharpe: {validation_result.deflated_sharpe:.4f}",
+            f"- Original Sharpe: {validation_result.original_sharpe:.4f}",
+            f"- p-value: {validation_result.p_value:.6f}",
+            f"- Number of Trials: {validation_result.n_trials}",
+            f"- Statistically Valid: {validation_result.is_valid}",
+        ])
+        if validation_result.warnings:
+            lines.append("- Warnings:")
+            for w in validation_result.warnings:
+                lines.append(f"  - {w}")
+
+    return "\n".join(lines)
+
+
+def _parse_llm_response(text: str) -> dict:
+    """Extract and parse JSON from the LLM response text.
+
+    Handles cases where the LLM wraps JSON in markdown code fences.
+    """
+    cleaned = text.strip()
+
+    # Strip markdown code fences if present
+    if cleaned.startswith("```"):
+        # Remove opening fence (with optional language tag)
+        first_newline = cleaned.index("\n")
+        cleaned = cleaned[first_newline + 1 :]
+        # Remove closing fence
+        if cleaned.endswith("```"):
+            cleaned = cleaned[: -3].strip()
+
+    return json.loads(cleaned)
+
+
+def _make_fallback_result(reason: str, model: str) -> LLMValidationResult:
+    """Return a safe CAUTION result when LLM validation is unavailable."""
+    return LLMValidationResult(
+        overall_assessment="CAUTION",
+        confidence=0.0,
+        concerns=[f"LLM validation unavailable: {reason}"],
+        strengths=[],
+        regime_risk="Unknown — LLM validation could not be performed.",
+        recommendation=(
+            "Automated LLM peer review could not be completed. "
+            "Proceed with manual review of all numerical validation results."
+        ),
+        raw_response={},
+        model_used=model,
+    )
+
+
+async def llm_validate_backtest(
+    backtest_result: BacktestResult,
+    validation_result: ValidationResult | None = None,
+    model: str = "claude-sonnet-4-5-20250514",
+    api_key: str | None = None,
+) -> LLMValidationResult:
+    """Pass backtest results to an LLM acting as a skeptical peer reviewer.
+
+    The LLM receives:
+    1. Strategy description and parameters
+    2. Numerical metrics (Sharpe, deflated Sharpe p-value, CPCV PBO)
+    3. Backtest period and market conditions
+    4. Turnover, transaction costs, capacity estimates
+
+    Uses structured output (JSON) for reliable parsing.
+    Falls back to a default CAUTION result if LLM call fails.
+
+    Reference: AFML integration plan — LLM-as-Judge for backtest validation.
+    """
+    resolved_key = api_key or os.environ.get("ANTHROPIC_API_KEY")
+    if not resolved_key:
+        return _make_fallback_result("ANTHROPIC_API_KEY not set.", model)
+
+    user_prompt = _format_backtest_prompt(backtest_result, validation_result)
+
+    try:
+        client = anthropic.AsyncAnthropic(api_key=resolved_key)
+
+        message = await client.messages.create(
+            model=model,
+            max_tokens=2048,
+            system=_LLM_SYSTEM_PROMPT,
+            messages=[{"role": "user", "content": user_prompt}],
+        )
+
+        # Extract text from response content blocks
+        response_text = ""
+        for block in message.content:
+            if hasattr(block, "text"):
+                response_text += block.text
+
+        if not response_text.strip():
+            return _make_fallback_result("Empty response from LLM.", model)
+
+        parsed = _parse_llm_response(response_text)
+
+        # Validate required fields
+        required_fields = {
+            "overall_assessment",
+            "confidence",
+            "concerns",
+            "strengths",
+            "regime_risk",
+            "recommendation",
+        }
+        missing = required_fields - set(parsed.keys())
+        if missing:
+            return _make_fallback_result(
+                f"LLM response missing fields: {missing}", model
+            )
+
+        # Validate overall_assessment value
+        assessment = parsed["overall_assessment"].upper()
+        if assessment not in ("PASS", "CAUTION", "FAIL"):
+            return _make_fallback_result(
+                f"Invalid overall_assessment: {parsed['overall_assessment']}", model
+            )
+
+        # Clamp confidence to [0, 1]
+        confidence = max(0.0, min(1.0, float(parsed["confidence"])))
+
+        return LLMValidationResult(
+            overall_assessment=assessment,
+            confidence=confidence,
+            concerns=list(parsed["concerns"]),
+            strengths=list(parsed["strengths"]),
+            regime_risk=str(parsed["regime_risk"]),
+            recommendation=str(parsed["recommendation"]),
+            raw_response=parsed,
+            model_used=model,
+        )
+
+    except json.JSONDecodeError as exc:
+        logger.warning("LLM returned invalid JSON: %s", exc)
+        return _make_fallback_result(f"Invalid JSON from LLM: {exc}", model)
+
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("LLM validation failed: %s", exc)
+        return _make_fallback_result(f"LLM call failed: {exc}", model)
