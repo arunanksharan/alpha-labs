@@ -64,7 +64,7 @@ export function useAuth() {
         setUser(await meRes.json());
       }
 
-      router.push("/");
+      router.push((process.env.NEXT_PUBLIC_BASE_PATH || "") + "/");
     },
     [router],
   );
@@ -93,7 +93,7 @@ export function useAuth() {
         setUser(await meRes.json());
       }
 
-      router.push("/");
+      router.push((process.env.NEXT_PUBLIC_BASE_PATH || "") + "/");
     },
     [router],
   );
@@ -113,7 +113,7 @@ export function useAuth() {
     localStorage.removeItem("access_token");
     localStorage.removeItem("refresh_token");
     setUser(null);
-    router.push("/login");
+    router.push((process.env.NEXT_PUBLIC_BASE_PATH || "") + "/login");
   }, [router]);
 
   const isAuthenticated = !!user;

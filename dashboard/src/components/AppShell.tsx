@@ -7,7 +7,9 @@ import { Menu, Zap } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
 import { AuthGuard } from "@/components/AuthGuard";
 
-const AUTH_PAGES = ["/login", "/signup"];
+import { BASE_PATH } from "@/lib/utils";
+
+const AUTH_PAGES = ["/login", "/signup", `${BASE_PATH}/login`, `${BASE_PATH}/signup`];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);

@@ -95,7 +95,7 @@ export default function SignupPage() {
 
         <p className="mt-6 text-center text-xs text-zinc-600">
           Already have an account?{" "}
-          <Link href="/login" className="text-violet-400 hover:text-violet-300">
+          <Link href={`${process.env.NEXT_PUBLIC_BASE_PATH || ""}/login`} className="text-violet-400 hover:text-violet-300">
             Sign in
           </Link>
         </p>

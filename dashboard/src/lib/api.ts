@@ -46,12 +46,12 @@ export async function apiFetch(
           // Refresh failed — clear tokens
           localStorage.removeItem("access_token");
           localStorage.removeItem("refresh_token");
-          window.location.href = "/login";
+          window.location.href = (process.env.NEXT_PUBLIC_BASE_PATH || "") + "/login";
         }
       } catch {
         localStorage.removeItem("access_token");
         localStorage.removeItem("refresh_token");
-        window.location.href = "/login";
+        window.location.href = (process.env.NEXT_PUBLIC_BASE_PATH || "") + "/login";
       }
     }
   }

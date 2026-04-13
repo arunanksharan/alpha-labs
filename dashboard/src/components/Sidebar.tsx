@@ -17,7 +17,7 @@ import {
   LogOut,
   Layers,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, BASE_PATH } from "@/lib/utils";
 import { useAppStore } from "@/lib/store";
 import { ModelSelector } from "@/components/ModelSelector";
 
@@ -65,11 +65,12 @@ export default function Sidebar({ onNavigate }: { onNavigate?: () => void } = {}
       {/* Navigation */}
       <nav className="flex-1 space-y-1 px-2 py-3">
         {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
-          const active = pathname === href;
+          const normalizedPath = pathname.replace(BASE_PATH, "") || "/";
+          const active = normalizedPath === href;
           return (
             <Link
               key={href}
-              href={href}
+              href={`${BASE_PATH}${href}`}
               onClick={onNavigate}
               className={cn(
                 "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
@@ -164,7 +165,7 @@ export default function Sidebar({ onNavigate }: { onNavigate?: () => void } = {}
           onClick={() => {
             localStorage.removeItem("access_token");
             localStorage.removeItem("refresh_token");
-            window.location.href = "/login";
+            window.location.href = `${BASE_PATH}/login`;
           }}
           className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-xs text-zinc-500 hover:bg-zinc-700 hover:text-red-400 transition-colors"
         >

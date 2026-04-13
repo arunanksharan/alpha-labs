@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { Loader2, Zap, AlertTriangle } from "lucide-react";
-import { API_URL } from "@/lib/utils";
+import { Loader2, Zap } from "lucide-react";
+import { API_URL, BASE_PATH } from "@/lib/utils";
 
-const PUBLIC_PATHS = ["/login", "/signup"];
+const PUBLIC_PATHS = ["/login", "/signup", `${BASE_PATH}/login`, `${BASE_PATH}/signup`];
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -40,7 +40,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
       if (!token) {
         if (backendAvailable) {
           // Backend is up, auth is required — redirect to login
-          router.replace("/login");
+          router.replace(`${BASE_PATH}/login`);
         } else {
           // No backend — allow access (dev mode)
           setAuthenticated(true);
@@ -75,16 +75,16 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
               } else {
                 localStorage.removeItem("access_token");
                 localStorage.removeItem("refresh_token");
-                router.replace("/login");
+                router.replace(`${BASE_PATH}/login`);
               }
             } catch {
               localStorage.removeItem("access_token");
               localStorage.removeItem("refresh_token");
-              router.replace("/login");
+              router.replace(`${BASE_PATH}/login`);
             }
           } else {
             localStorage.removeItem("access_token");
-            router.replace("/login");
+            router.replace(`${BASE_PATH}/login`);
           }
         } else {
           // 500 or other error — backend issue, not auth issue
