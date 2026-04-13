@@ -20,6 +20,8 @@ from analytics.returns import (
     compute_var,
     compute_volatility,
 )
+from analytics.filters import CUSUMFilter, EventFilter
+from analytics.structural_breaks import StructuralBreakDetector
 from analytics.statistics import (
     adf_test,
     engle_granger_cointegration,
@@ -59,4 +61,7 @@ __all__ = [
     "ks_test",
     "half_life_mean_reversion",
     "rolling_adf",
+    "EventFilter",
+    "CUSUMFilter",
+    "StructuralBreakDetector",
 ]
