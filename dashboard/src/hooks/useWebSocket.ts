@@ -3,12 +3,22 @@
 import { useEffect, useRef, useCallback, useState } from "react";
 import type { AgentEvent } from "@/types";
 import { WS_URL } from "@/lib/utils";
+import { useAppStore } from "@/lib/store";
 
 export function useWebSocket() {
   const ws = useRef<WebSocket | null>(null);
-  const reconnectTimer = useRef<ReturnType<typeof setTimeout>>();
+  const reconnectTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const [events, setEvents] = useState<AgentEvent[]>([]);
-  const [connected, setConnected] = useState(false);
+  const [connected, setConnectedLocal] = useState(false);
+  const setConnectedStore = useAppStore((s) => s.setConnected);
+
+  const setConnected = useCallback(
+    (value: boolean) => {
+      setConnectedLocal(value);
+      setConnectedStore(value);
+    },
+    [setConnectedStore],
+  );
 
   const connect = useCallback(() => {
     if (ws.current?.readyState === WebSocket.OPEN) return;
@@ -20,7 +30,10 @@ export function useWebSocket() {
     }
 
     try {
-      const socket = new WebSocket(WS_URL);
+      // Append auth token to WebSocket URL if available
+      const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+      const wsUrl = token ? `${WS_URL}?token=${encodeURIComponent(token)}` : WS_URL;
+      const socket = new WebSocket(wsUrl);
 
       socket.onopen = () => {
         setConnected(true);

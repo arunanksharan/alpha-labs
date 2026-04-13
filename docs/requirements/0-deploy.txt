@@ -1,0 +1,5 @@
+Machine:        ssh -i ~/.ssh/contabo root@82.208.21.17
+  API gateway:    apigateway.kzuushilabs.xyz   (existing nginx, already SSL)
+  Target route:   apigateway.kzuushilabs.xyz/pitchpilot/*
+                  → proxied to 127.0.0.1:8000 on the VM
+  Frontend:       Vercel (new deploy)

@@ -6,7 +6,7 @@ authors = ["Parul Juniwal"]
 readme = "ROADMAP.md"
 
 [tool.poetry.dependencies]
-python = "^3.12"
+python = ">=3.11,<4.0"
 
 # Data
 yfinance = "^1.2.0"
@@ -14,7 +14,7 @@ fredapi = "^0.5.2"
 pandas = "^3.0.0"
 polars = "^1.39.0"
 duckdb = "^1.5.0"
-pyarrow = "^18.0.0"
+pyarrow = ">=18.0.0"
 httpx = "^0.27.0"
 
 # Numerical / Stats
@@ -37,8 +37,8 @@ anthropic = "^0.89.0"
 
 # Backtesting
 quantstats = ">=0.0.62"
-vectorbt = ">=0.28.5"
-nautilus_trader = "^1.225.0"
+# vectorbt = ">=0.28.5"  # Disabled: requires pandas <3.0
+# nautilus_trader = {version = "^1.225.0", python = ">=3.12,<3.15"}  # Disabled: requires pandas <3.0
 
 # Portfolio
 pyportfolioopt = "^1.5.5"

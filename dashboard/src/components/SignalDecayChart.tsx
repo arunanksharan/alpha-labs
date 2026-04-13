@@ -70,7 +70,7 @@ export function SignalDecayChart({
               borderRadius: "8px",
               color: "#f4f4f5",
             }}
-            formatter={(value: number) => [value.toFixed(4), "IC"]}
+            formatter={(value) => [Number(value).toFixed(4), "IC"]}
           />
           <ReferenceLine y={0} stroke="#3f3f46" strokeDasharray="3 3" />
           {halfLife !== undefined && (

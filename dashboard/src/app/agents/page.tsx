@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   Search,
@@ -9,355 +10,253 @@ import {
   CheckCircle2,
   Clock,
   FileText,
-  AlertTriangle,
+  Loader2,
+  Bot,
+  RefreshCw,
+  XCircle,
+  Play,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-/* ---------- Agent pipeline steps ---------- */
+import { API_URL } from "@/lib/utils";
 
 type StepStatus = "completed" | "running" | "awaiting" | "pending" | "failed";
 
 interface PipelineStep {
   name: string;
-  icon: React.ElementType;
+  icon: React.ComponentType<{ className?: string }>;
   status: StepStatus;
   message: string;
 }
 
-const PIPELINE_STEPS: PipelineStep[] = [
-  {
-    name: "Research Agent",
-    icon: Search,
-    status: "completed",
-    message: "Fetched 500 days OHLCV, computed features, generated 6 signals",
-  },
-  {
-    name: "Risk Agent",
-    icon: Shield,
-    status: "completed",
-    message: "5 signals approved, 1 rejected (TSLA: exposure limit)",
-  },
-  {
-    name: "Approval Gate",
-    icon: UserCheck,
-    status: "awaiting",
-    message: "Awaiting human review for 5 signals",
-  },
-  {
-    name: "Validation Agent",
-    icon: CheckCircle2,
-    status: "pending",
-    message: "Pending approval gate",
-  },
-  {
-    name: "Signal Decay",
-    icon: Clock,
-    status: "pending",
-    message: "Waiting for validation",
-  },
-  {
-    name: "Report Generator",
-    icon: FileText,
-    status: "pending",
-    message: "Queued",
-  },
-];
-
-const STATUS_CONFIG: Record<
-  StepStatus,
-  { color: string; bg: string; border: string; label: string; pulse: boolean }
-> = {
-  running: {
-    color: "text-violet-400",
-    bg: "bg-violet-500/15",
-    border: "border-violet-500/40",
-    label: "Running",
-    pulse: true,
-  },
-  completed: {
-    color: "text-emerald-400",
-    bg: "bg-emerald-500/15",
-    border: "border-emerald-500/40",
-    label: "Completed",
-    pulse: false,
-  },
-  failed: {
-    color: "text-red-400",
-    bg: "bg-red-500/15",
-    border: "border-red-500/40",
-    label: "Failed",
-    pulse: false,
-  },
-  awaiting: {
-    color: "text-amber-400",
-    bg: "bg-amber-500/15",
-    border: "border-amber-500/40",
-    label: "Awaiting",
-    pulse: true,
-  },
-  pending: {
-    color: "text-zinc-500",
-    bg: "bg-zinc-500/10",
-    border: "border-zinc-700",
-    label: "Pending",
-    pulse: false,
-  },
+const STATUS_CONFIG: Record<StepStatus, { color: string; bg: string; border: string; label: string; pulse: boolean }> = {
+  running: { color: "text-violet-400", bg: "bg-violet-500/15", border: "border-violet-500/40", label: "Running", pulse: true },
+  completed: { color: "text-emerald-400", bg: "bg-emerald-500/15", border: "border-emerald-500/40", label: "Completed", pulse: false },
+  awaiting: { color: "text-amber-400", bg: "bg-amber-500/15", border: "border-amber-500/40", label: "Awaiting", pulse: true },
+  pending: { color: "text-zinc-500", bg: "bg-zinc-500/10", border: "border-zinc-700", label: "Pending", pulse: false },
+  failed: { color: "text-red-400", bg: "bg-red-500/15", border: "border-red-500/40", label: "Failed", pulse: false },
 };
 
-/* ---------- Page ---------- */
+interface JobData {
+  id: string;
+  status: string;
+  params: Record<string, unknown>;
+  progress: number;
+  progress_stage: string;
+  progress_message: string;
+  result: Record<string, unknown> | null;
+  error: string | null;
+  created_at: string;
+  completed_at: string | null;
+}
+
+// Map job progress_stage to pipeline step index
+const STAGE_TO_STEP: Record<string, number> = {
+  queued: -1,
+  fetching_data: 0,
+  resolving_strategy: 0,
+  computing_features: 1,
+  generating_signals: 1,
+  evaluating_risk: 2,
+  running_backtest: 3,
+  validating: 4,
+  signal_decay: 4,
+  complete: 5,
+};
+
+function derivePipelineFromJob(job: JobData | null): PipelineStep[] {
+  const steps: PipelineStep[] = [
+    { name: "Data & Features", icon: Search, status: "pending", message: "Fetch OHLCV, compute z-scores, RSI, MACD" },
+    { name: "Signal Generation", icon: Shield, status: "pending", message: "Strategy rules → entry/exit signals" },
+    { name: "Risk Evaluation", icon: UserCheck, status: "pending", message: "Position limits, Kelly sizing, VaR" },
+    { name: "Backtest Engine", icon: CheckCircle2, status: "pending", message: "Daily equity curve, transaction costs" },
+    { name: "Validation & Decay", icon: Clock, status: "pending", message: "Deflated Sharpe, IC curve, half-life" },
+    { name: "Results", icon: FileText, status: "pending", message: "Metrics, equity curve, report" },
+  ];
+
+  if (!job) return steps;
+
+  if (job.status === "completed") {
+    // All steps completed
+    for (const s of steps) s.status = "completed";
+    const bt = (job.result as Record<string, unknown>)?.backtest as Record<string, unknown> | undefined;
+    if (bt) {
+      steps[5].message = `Return ${((bt.total_return as number) * 100).toFixed(1)}%, Sharpe ${(bt.sharpe_ratio as number)?.toFixed(2)}`;
+    }
+    return steps;
+  }
+
+  if (job.status === "failed") {
+    const failStep = STAGE_TO_STEP[job.progress_stage] ?? 0;
+    for (let i = 0; i < failStep; i++) steps[i].status = "completed";
+    steps[failStep].status = "failed";
+    steps[failStep].message = job.error || "Failed";
+    return steps;
+  }
+
+  if (job.status === "running") {
+    const currentStep = STAGE_TO_STEP[job.progress_stage] ?? 0;
+    for (let i = 0; i < currentStep; i++) steps[i].status = "completed";
+    if (currentStep >= 0 && currentStep < steps.length) {
+      steps[currentStep].status = "running";
+      steps[currentStep].message = job.progress_message || job.progress_stage;
+    }
+    return steps;
+  }
+
+  return steps;
+}
 
 export default function AgentsPage() {
-  const [visibleSteps, setVisibleSteps] = useState(0);
+  const [jobs, setJobs] = useState<JobData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
-    if (visibleSteps < PIPELINE_STEPS.length) {
-      const timer = setTimeout(
-        () => setVisibleSteps((v) => v + 1),
-        400 + visibleSteps * 200
-      );
-      return () => clearTimeout(timer);
+    async function fetchJobs() {
+      try {
+        const token = localStorage.getItem("access_token");
+        const headers: Record<string, string> = {};
+        if (token) headers["Authorization"] = `Bearer ${token}`;
+        const res = await fetch(`${API_URL}/api/jobs?limit=20`, { headers });
+        if (res.ok) {
+          const data = await res.json();
+          setJobs(data.jobs || []);
+        }
+      } catch {} finally { setLoading(false); }
     }
-  }, [visibleSteps]);
+    fetchJobs();
+    const interval = setInterval(fetchJobs, 2000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Derive pipeline from the most recent job (running > latest completed)
+  const activeJob = jobs.find((j) => j.status === "running") || jobs.find((j) => j.status === "completed") || null;
+  const pipelineSteps = useMemo(() => derivePipelineFromJob(activeJob), [activeJob]);
+  const pipelineLabel = activeJob
+    ? `${activeJob.params.ticker} / ${activeJob.params.strategy} — ${activeJob.status}`
+    : "No active job";
+
+  const runningJobs = jobs.filter((j) => j.status === "running");
+  const completedJobs = jobs.filter((j) => j.status === "completed");
 
   return (
     <div className="min-h-screen bg-zinc-950">
-      {/* Header */}
       <header className="border-b border-zinc-800 bg-zinc-950/80 backdrop-blur-lg">
-        <div className="mx-auto max-w-7xl px-6 py-6">
-          <motion.h1
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-xl font-semibold text-zinc-50"
-          >
-            Agent Pipeline
-          </motion.h1>
-          <p className="mt-1 text-sm text-zinc-500">
-            Monitor the agentic research pipeline in real time
-          </p>
+        <div className="mx-auto max-w-5xl px-4 sm:px-6 py-5">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-lg font-semibold text-zinc-50">Agent Pipeline</h1>
+              <p className="mt-1 text-sm text-zinc-500">Monitor the agentic research pipeline in real time</p>
+            </div>
+            <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
+              onClick={() => router.push("/jobs")}
+              className="flex items-center gap-2 rounded-lg border border-violet-500/50 px-4 py-2 text-sm font-medium text-violet-400 hover:bg-violet-500/10">
+              <Play className="h-3.5 w-3.5" /> Submit New Job
+            </motion.button>
+          </div>
         </div>
       </header>
 
-      <main className="mx-auto max-w-7xl space-y-8 px-6 py-8">
-        {/* Agent Timeline */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-5"
-        >
-          <h2 className="mb-6 text-sm font-medium uppercase tracking-wider text-zinc-400">
-            Agent Timeline
-          </h2>
+      <main className="mx-auto max-w-5xl px-4 sm:px-6 py-6 space-y-6">
+        {/* Pipeline — derived from most recent job */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+          className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-5">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-sm font-medium uppercase tracking-wider text-zinc-400">Pipeline Status</h2>
+            <span className="text-xs text-zinc-500 font-mono">{pipelineLabel}</span>
+          </div>
+          <div className="relative pl-8">
+            {pipelineSteps.map((step, i) => {
+              const config = STATUS_CONFIG[step.status];
+              const Icon = step.icon;
+              const isLast = i === pipelineSteps.length - 1;
 
-          <div className="relative ml-4">
-            {/* Vertical connector line */}
-            <div className="absolute left-5 top-2 bottom-2 w-px bg-zinc-800" />
-
-            <div className="space-y-1">
-              {PIPELINE_STEPS.map((step, i) => {
-                const config = STATUS_CONFIG[step.status];
-                const Icon = step.icon;
-                const isVisible = i < visibleSteps;
-
-                return (
-                  <motion.div
-                    key={step.name}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={
-                      isVisible
-                        ? { opacity: 1, x: 0 }
-                        : { opacity: 0, x: -20 }
-                    }
-                    transition={{
-                      duration: 0.35,
-                      ease: [0, 0, 0.2, 1],
-                    }}
-                    className="relative flex items-start gap-4 py-3"
-                  >
-                    {/* Icon circle */}
-                    <div
-                      className={cn(
-                        "relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border",
-                        config.bg,
-                        config.border
-                      )}
-                    >
-                      {config.pulse && (
-                        <span
-                          className={cn(
-                            "absolute inset-0 animate-ping rounded-full opacity-20",
-                            step.status === "running"
-                              ? "bg-violet-500"
-                              : "bg-amber-500"
-                          )}
-                        />
-                      )}
+              return (
+                <motion.div key={step.name}
+                  initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.06, type: "spring", stiffness: 300, damping: 25 }}
+                  className="relative pb-5 last:pb-0">
+                  {!isLast && <div className="absolute left-[7px] top-8 bottom-0 w-px bg-gradient-to-b from-zinc-700 to-zinc-800" />}
+                  <div className="flex items-start gap-4">
+                    <div className={cn("relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full border", config.border, config.bg)}>
+                      {config.pulse && <span className={cn("absolute inset-0 animate-ping rounded-full opacity-30", step.status === "running" ? "bg-violet-500" : "bg-amber-500")} />}
                       <Icon className={cn("h-4 w-4", config.color)} />
                     </div>
-
-                    {/* Content */}
                     <div className="min-w-0 flex-1 pt-1">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-zinc-200">
-                          {step.name}
-                        </span>
-                        <span
-                          className={cn(
-                            "rounded-full border px-2 py-0.5 text-[10px] font-medium",
-                            config.bg,
-                            config.border,
-                            config.color
-                          )}
-                        >
-                          {config.label}
-                        </span>
+                        <h3 className="text-sm font-medium text-zinc-200">{step.name}</h3>
+                        <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-medium", config.bg, config.color)}>{config.label}</span>
                       </div>
-                      <p className="mt-0.5 text-xs text-zinc-500">
-                        {step.message}
-                      </p>
+                      <p className="mt-0.5 text-xs text-zinc-500">{step.message}</p>
                     </div>
-                  </motion.div>
-                );
-              })}
-            </div>
+                  </div>
+                </motion.div>
+              );
+            })}
           </div>
         </motion.div>
 
-        {/* 3D Visualization Placeholders */}
-        <div className="grid gap-6 lg:grid-cols-2">
-          {/* Vol Surface */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-5"
-          >
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-sm font-medium uppercase tracking-wider text-zinc-400">
-                3D Vol Surface
-              </h3>
-              <span className="rounded-full border border-zinc-700 bg-zinc-800 px-2 py-0.5 text-[10px] text-zinc-500">
-                Three.js
-              </span>
-            </div>
-            <div className="relative flex h-64 items-center justify-center overflow-hidden rounded-lg">
-              {/* CSS gradient mesh placeholder */}
-              <div
-                className="absolute inset-0"
-                style={{
-                  background: `
-                    radial-gradient(ellipse at 20% 50%, rgba(139, 92, 246, 0.25) 0%, transparent 50%),
-                    radial-gradient(ellipse at 80% 20%, rgba(6, 182, 212, 0.2) 0%, transparent 50%),
-                    radial-gradient(ellipse at 60% 80%, rgba(245, 158, 11, 0.15) 0%, transparent 50%),
-                    radial-gradient(ellipse at 40% 30%, rgba(139, 92, 246, 0.1) 0%, transparent 40%),
-                    linear-gradient(180deg, rgba(24, 24, 27, 0.8) 0%, rgba(24, 24, 27, 1) 100%)
-                  `,
-                }}
-              />
-              {/* Grid lines overlay */}
-              <div
-                className="absolute inset-0 opacity-20"
-                style={{
-                  backgroundImage: `
-                    linear-gradient(rgba(139, 92, 246, 0.3) 1px, transparent 1px),
-                    linear-gradient(90deg, rgba(139, 92, 246, 0.3) 1px, transparent 1px)
-                  `,
-                  backgroundSize: "30px 30px",
-                  transform: "perspective(400px) rotateX(30deg)",
-                  transformOrigin: "center bottom",
-                }}
-              />
-              <div className="shimmer-container relative z-10 text-center">
-                <AlertTriangle className="mx-auto mb-2 h-5 w-5 text-zinc-600" />
-                <p className="text-sm text-zinc-500 shimmer-text">
-                  Loading 3D...
-                </p>
-                <p className="mt-1 text-[10px] text-zinc-700">
-                  Three.js integration pending
-                </p>
-              </div>
+        {/* Running Jobs with progress */}
+        {runningJobs.length > 0 && (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+            className="rounded-xl border border-violet-500/30 bg-violet-500/5 p-5">
+            <h2 className="mb-3 flex items-center gap-2 text-sm font-medium uppercase tracking-wider text-violet-400">
+              <Loader2 className="h-4 w-4 animate-spin" /> Active Jobs
+            </h2>
+            <div className="space-y-3">
+              {runningJobs.map((job) => (
+                <div key={job.id} className="rounded-lg border border-zinc-800 bg-zinc-900/50 px-4 py-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-mono text-sm text-zinc-200">{job.params.ticker as string} / {job.params.strategy as string}</span>
+                    <span className="text-xs text-zinc-500">{Math.round(job.progress * 100)}%</span>
+                  </div>
+                  <div className="h-1.5 rounded-full bg-zinc-800 overflow-hidden">
+                    <motion.div className="h-full bg-violet-500 rounded-full" initial={{ width: 0 }} animate={{ width: `${job.progress * 100}%` }} transition={{ duration: 0.5 }} />
+                  </div>
+                  <p className="mt-1.5 text-[10px] text-zinc-600">{job.progress_message || job.progress_stage}</p>
+                </div>
+              ))}
             </div>
           </motion.div>
+        )}
 
-          {/* Correlation */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-5"
-          >
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-sm font-medium uppercase tracking-wider text-zinc-400">
-                3D Correlation
-              </h3>
-              <span className="rounded-full border border-zinc-700 bg-zinc-800 px-2 py-0.5 text-[10px] text-zinc-500">
-                Three.js
-              </span>
+        {/* Recent Completed Jobs */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+          className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-5">
+          <h2 className="mb-3 text-sm font-medium uppercase tracking-wider text-zinc-400">Recent Results</h2>
+          {loading ? (
+            <div className="flex items-center justify-center py-8"><Loader2 className="h-5 w-5 animate-spin text-zinc-500" /></div>
+          ) : completedJobs.length === 0 ? (
+            <div className="py-8 text-center">
+              <Bot className="mx-auto h-8 w-8 text-zinc-700 mb-2" />
+              <p className="text-sm text-zinc-500">No completed jobs yet.</p>
+              <button onClick={() => router.push("/jobs")} className="mt-3 text-xs text-violet-400 hover:text-violet-300">Submit a backtest →</button>
             </div>
-            <div className="relative flex h-64 items-center justify-center overflow-hidden rounded-lg">
-              {/* CSS gradient mesh placeholder */}
-              <div
-                className="absolute inset-0"
-                style={{
-                  background: `
-                    radial-gradient(ellipse at 30% 60%, rgba(16, 185, 129, 0.2) 0%, transparent 50%),
-                    radial-gradient(ellipse at 70% 30%, rgba(59, 130, 246, 0.2) 0%, transparent 50%),
-                    radial-gradient(ellipse at 50% 50%, rgba(239, 68, 68, 0.1) 0%, transparent 40%),
-                    linear-gradient(180deg, rgba(24, 24, 27, 0.8) 0%, rgba(24, 24, 27, 1) 100%)
-                  `,
-                }}
-              />
-              {/* Scatter dots overlay */}
-              <div className="absolute inset-0 opacity-30">
-                {Array.from({ length: 30 }).map((_, i) => (
-                  <div
-                    key={i}
-                    className="absolute h-1.5 w-1.5 rounded-full bg-cyan-400"
-                    style={{
-                      left: `${15 + Math.random() * 70}%`,
-                      top: `${15 + Math.random() * 70}%`,
-                      opacity: 0.3 + Math.random() * 0.5,
-                    }}
-                  />
-                ))}
-              </div>
-              <div className="shimmer-container relative z-10 text-center">
-                <AlertTriangle className="mx-auto mb-2 h-5 w-5 text-zinc-600" />
-                <p className="text-sm text-zinc-500 shimmer-text">
-                  Loading 3D...
-                </p>
-                <p className="mt-1 text-[10px] text-zinc-700">
-                  Three.js integration pending
-                </p>
-              </div>
+          ) : (
+            <div className="space-y-2">
+              {completedJobs.slice(0, 10).map((job) => {
+                const bt = (job.result as Record<string, unknown>)?.backtest as Record<string, unknown> | undefined;
+                const ret = (bt?.total_return as number) || 0;
+                const duration = job.completed_at ? `${((new Date(job.completed_at).getTime() - new Date(job.created_at).getTime()) / 1000).toFixed(1)}s` : "";
+
+                return (
+                  <button key={job.id} type="button" onClick={() => router.push("/jobs")}
+                    className="flex w-full items-center gap-3 rounded-lg border border-zinc-800/50 bg-zinc-900/30 px-3 py-2.5 text-left hover:bg-zinc-800/30 transition-colors">
+                    <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-400" />
+                    <div className="flex-1 min-w-0">
+                      <span className="font-mono text-xs font-medium text-zinc-200">{job.params.ticker as string}</span>
+                      <span className="ml-2 rounded bg-zinc-800 px-1.5 py-0.5 text-[9px] text-violet-300">{job.params.strategy as string}</span>
+                    </div>
+                    <span className={cn("text-xs font-mono", ret > 0 ? "text-emerald-400" : "text-red-400")}>{(ret * 100).toFixed(1)}%</span>
+                    {bt && <span className="text-xs text-zinc-600">Sharpe {(bt.sharpe_ratio as number)?.toFixed(2)}</span>}
+                    {duration && <span className="text-[10px] text-zinc-600 tabular-nums">{duration}</span>}
+                  </button>
+                );
+              })}
             </div>
-          </motion.div>
-        </div>
+          )}
+        </motion.div>
       </main>
-
-      {/* Shimmer animation */}
-      <style jsx>{`
-        .shimmer-text {
-          background: linear-gradient(
-            90deg,
-            #71717a 0%,
-            #a1a1aa 50%,
-            #71717a 100%
-          );
-          background-size: 200% 100%;
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-          animation: shimmer 2s ease-in-out infinite;
-        }
-        @keyframes shimmer {
-          0% {
-            background-position: 200% 0;
-          }
-          100% {
-            background-position: -200% 0;
-          }
-        }
-      `}</style>
     </div>
   );
 }

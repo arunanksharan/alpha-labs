@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 import {
   ArrowUpRight,
@@ -14,6 +15,10 @@ import {
   BarChart3,
   MessageSquare,
   ShieldCheck,
+  Loader2,
+  Inbox,
+  Search,
+  RefreshCw,
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -24,11 +29,26 @@ import {
   Tooltip,
   ReferenceLine,
 } from "recharts";
-import { cn } from "@/lib/utils";
+import { cn, API_URL } from "@/lib/utils";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
 /* ------------------------------------------------------------------ */
+
+interface ApiSignal {
+  ticker: string;
+  strategy: string;
+  signals_count: number;
+  total_return: number;
+  sharpe_ratio: number;
+  max_drawdown: number;
+  win_rate: number;
+}
+
+interface ApiSignalsResponse {
+  signals: ApiSignal[];
+  count: number;
+}
 
 interface AgentReasoning {
   agent: string;
@@ -48,136 +68,116 @@ interface BoardSignal {
   agents: AgentReasoning[];
   potential_return: number;
   ic_curve: { horizon: number; ic: number }[];
+  // Raw API data for expanded view
+  sharpe_ratio: number;
+  max_drawdown: number;
+  win_rate: number;
+  signals_count: number;
 }
 
-type FilterField = "strategy" | "direction" | "confidence";
 type SortField = "confidence" | "age_days" | "ticker" | "potential_return";
-
-/* ------------------------------------------------------------------ */
-/*  Demo data                                                          */
-/* ------------------------------------------------------------------ */
-
-function generateICCurve(halfLife: number): { horizon: number; ic: number }[] {
-  return Array.from({ length: 30 }, (_, i) => ({
-    horizon: i + 1,
-    ic: 0.12 * Math.exp(-0.693 * (i + 1) / halfLife) + (Math.random() - 0.5) * 0.02,
-  }));
-}
-
-const DEMO_SIGNALS: BoardSignal[] = [
-  {
-    id: "sig-1",
-    ticker: "NVDA",
-    direction: "long",
-    confidence: 0.84,
-    age_days: 2,
-    half_life: 12,
-    strategy: "mean_reversion",
-    generated_date: "2024-03-15",
-    potential_return: 0.047,
-    agents: [
-      { agent: "The Quant", icon: "quant", summary: "z-score = -2.1, past entry threshold. Mean-reversion signal triggered on 20d window." },
-      { agent: "The Technician", icon: "tech", summary: "RSI = 28 (oversold), MACD bullish crossover confirmed. Support at $845." },
-      { agent: "Sentiment Analyst", icon: "sentiment", summary: "Tone shift +0.19 over 48h. Earnings call transcript sentiment improving." },
-      { agent: "Risk Manager", icon: "risk", summary: "Kelly sizing: $4,200. Portfolio VaR impact: +0.3%. Within risk budget." },
-    ],
-    ic_curve: generateICCurve(12),
-  },
-  {
-    id: "sig-2",
-    ticker: "MSFT",
-    direction: "short",
-    confidence: 0.65,
-    age_days: 8,
-    half_life: 15,
-    strategy: "momentum",
-    generated_date: "2024-03-09",
-    potential_return: -0.023,
-    agents: [
-      { agent: "The Quant", icon: "quant", summary: "Momentum factor decaying. 60d rolling return turning negative." },
-      { agent: "The Technician", icon: "tech", summary: "Death cross forming on daily. RSI = 62, divergence from price." },
-      { agent: "Sentiment Analyst", icon: "sentiment", summary: "Neutral sentiment. No significant catalyst detected." },
-      { agent: "Risk Manager", icon: "risk", summary: "Kelly sizing: $2,100. Moderate conviction. VaR impact: +0.2%." },
-    ],
-    ic_curve: generateICCurve(15),
-  },
-  {
-    id: "sig-3",
-    ticker: "AAPL",
-    direction: "long",
-    confidence: 0.71,
-    age_days: 11,
-    half_life: 12,
-    strategy: "mean_reversion",
-    generated_date: "2024-03-06",
-    potential_return: 0.031,
-    agents: [
-      { agent: "The Quant", icon: "quant", summary: "z-score = -1.8. Approaching half-life but still within threshold." },
-      { agent: "The Technician", icon: "tech", summary: "Double bottom at $168. Volume confirmation on second touch." },
-      { agent: "Sentiment Analyst", icon: "sentiment", summary: "Mixed signals. Product launch cycle creating noise." },
-      { agent: "Risk Manager", icon: "risk", summary: "Kelly sizing: $3,500. VaR impact: +0.25%. Aging signal, caution." },
-    ],
-    ic_curve: generateICCurve(12),
-  },
-  {
-    id: "sig-4",
-    ticker: "TSLA",
-    direction: "short",
-    confidence: 0.73,
-    age_days: 1,
-    half_life: 8,
-    strategy: "sentiment",
-    generated_date: "2024-03-16",
-    potential_return: -0.038,
-    agents: [
-      { agent: "The Quant", icon: "quant", summary: "Implied vol skew extreme. Put/call ratio at 1.4." },
-      { agent: "The Technician", icon: "tech", summary: "Breakdown below 50d MA. Volume spike on sell-off." },
-      { agent: "Sentiment Analyst", icon: "sentiment", summary: "Negative tone shift -0.31. Social media sentiment cratering." },
-      { agent: "Risk Manager", icon: "risk", summary: "Kelly sizing: $1,800. High vol environment. Tight stop recommended." },
-    ],
-    ic_curve: generateICCurve(8),
-  },
-  {
-    id: "sig-5",
-    ticker: "META",
-    direction: "long",
-    confidence: 0.58,
-    age_days: 5,
-    half_life: 20,
-    strategy: "momentum",
-    generated_date: "2024-03-12",
-    potential_return: 0.019,
-    agents: [
-      { agent: "The Quant", icon: "quant", summary: "Momentum factor positive. 20d return in top quartile." },
-      { agent: "The Technician", icon: "tech", summary: "Consolidation above breakout level. Volume tapering, waiting for catalyst." },
-      { agent: "Sentiment Analyst", icon: "sentiment", summary: "Mild positive. Ad revenue expectations lifting." },
-      { agent: "Risk Manager", icon: "risk", summary: "Kelly sizing: $2,800. Lower conviction, half position recommended." },
-    ],
-    ic_curve: generateICCurve(20),
-  },
-  {
-    id: "sig-6",
-    ticker: "GOOG",
-    direction: "neutral",
-    confidence: 0.45,
-    age_days: 3,
-    half_life: 10,
-    strategy: "mean_reversion",
-    generated_date: "2024-03-14",
-    potential_return: 0.005,
-    agents: [
-      { agent: "The Quant", icon: "quant", summary: "z-score = -0.4. No clear signal. Within normal range." },
-      { agent: "The Technician", icon: "tech", summary: "Ranging between $148-$155. No breakout or breakdown." },
-      { agent: "Sentiment Analyst", icon: "sentiment", summary: "Neutral. Antitrust headlines creating uncertainty." },
-      { agent: "Contrarian", icon: "contrarian", summary: "Consensus is neutral — no contrarian edge here." },
-    ],
-    ic_curve: generateICCurve(10),
-  },
-];
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
 /* ------------------------------------------------------------------ */
+
+function generateICCurve(halfLife: number, sharpe: number): { horizon: number; ic: number }[] {
+  const amplitude = Math.min(Math.abs(sharpe) * 0.06, 0.15);
+  return Array.from({ length: 30 }, (_, i) => ({
+    horizon: i + 1,
+    ic:
+      amplitude * Math.exp((-0.693 * (i + 1)) / halfLife) +
+      (Math.random() - 0.5) * 0.02,
+  }));
+}
+
+function deriveDirection(totalReturn: number): "long" | "short" | "neutral" {
+  if (totalReturn > 0.005) return "long";
+  if (totalReturn < -0.005) return "short";
+  return "neutral";
+}
+
+function deriveConfidence(sharpe: number): number {
+  return Math.min(Math.max(Math.abs(sharpe) / 5, 0), 1);
+}
+
+function deriveHalfLife(strategy: string): number {
+  switch (strategy) {
+    case "mean_reversion":
+      return 12;
+    case "momentum":
+      return 20;
+    case "sentiment":
+      return 8;
+    default:
+      return 15;
+  }
+}
+
+function deriveAgeDays(signalsCount: number): number {
+  // More signals typically means longer running — approximate days
+  return Math.max(1, Math.min(Math.round(signalsCount / 10), 30));
+}
+
+function buildAgentReasoning(signal: ApiSignal): AgentReasoning[] {
+  const agents: AgentReasoning[] = [];
+  const dir = signal.total_return > 0 ? "bullish" : "bearish";
+  const sharpeStr = signal.sharpe_ratio.toFixed(2);
+  const returnStr = (signal.total_return * 100).toFixed(2);
+  const drawdownStr = (signal.max_drawdown * 100).toFixed(1);
+  const winStr = (signal.win_rate * 100).toFixed(0);
+
+  agents.push({
+    agent: "The Quant",
+    icon: "quant",
+    summary: `Sharpe ratio: ${sharpeStr}. ${signal.signals_count} signals generated. ${signal.strategy === "mean_reversion" ? "Mean-reversion" : signal.strategy === "momentum" ? "Momentum" : "Strategy"} signal active on ${signal.ticker}.`,
+  });
+
+  agents.push({
+    agent: "The Technician",
+    icon: "tech",
+    summary: `Total return: ${returnStr}%. Win rate: ${winStr}%. ${dir === "bullish" ? "Positive" : "Negative"} trend in backtest results.`,
+  });
+
+  agents.push({
+    agent: "Sentiment Analyst",
+    icon: "sentiment",
+    summary: `Signal direction is ${dir}. Max drawdown: ${drawdownStr}%. ${Math.abs(signal.max_drawdown) < 0.05 ? "Risk contained." : "Elevated drawdown risk."}`,
+  });
+
+  agents.push({
+    agent: "Risk Manager",
+    icon: "risk",
+    summary: `Max drawdown: ${drawdownStr}%. Sharpe: ${sharpeStr}. ${Math.abs(signal.sharpe_ratio) > 1 ? "Within risk budget." : "Below Sharpe threshold — caution advised."}`,
+  });
+
+  return agents;
+}
+
+function apiSignalToBoard(signal: ApiSignal, index: number): BoardSignal {
+  const direction = deriveDirection(signal.total_return);
+  const confidence = deriveConfidence(signal.sharpe_ratio);
+  const halfLife = deriveHalfLife(signal.strategy);
+  const ageDays = deriveAgeDays(signal.signals_count);
+
+  return {
+    id: `sig-${signal.ticker}-${signal.strategy}-${index}`,
+    ticker: signal.ticker,
+    direction,
+    confidence,
+    age_days: ageDays,
+    half_life: halfLife,
+    strategy: signal.strategy,
+    generated_date: new Date().toISOString().split("T")[0],
+    potential_return: signal.total_return,
+    agents: buildAgentReasoning(signal),
+    ic_curve: generateICCurve(halfLife, signal.sharpe_ratio),
+    sharpe_ratio: signal.sharpe_ratio,
+    max_drawdown: signal.max_drawdown,
+    win_rate: signal.win_rate,
+    signals_count: signal.signals_count,
+  };
+}
 
 function getAgingStatus(ageDays: number, halfLife: number) {
   const ratio = ageDays / halfLife;
@@ -219,7 +219,13 @@ const STRATEGY_LABELS: Record<string, string> = {
 /*  Mini IC Sparkline                                                  */
 /* ------------------------------------------------------------------ */
 
-function MiniICChart({ data, halfLife }: { data: { horizon: number; ic: number }[]; halfLife: number }) {
+function MiniICChart({
+  data,
+  halfLife,
+}: {
+  data: { horizon: number; ic: number }[];
+  halfLife: number;
+}) {
   return (
     <ResponsiveContainer width="100%" height={120}>
       <LineChart data={data}>
@@ -250,7 +256,12 @@ function MiniICChart({ data, halfLife }: { data: { horizon: number; ic: number }
           x={Math.round(halfLife)}
           stroke="#8b5cf6"
           strokeDasharray="5 5"
-          label={{ value: "\u00bd", fill: "#8b5cf6", position: "top", fontSize: 10 }}
+          label={{
+            value: "\u00bd",
+            fill: "#8b5cf6",
+            position: "top",
+            fontSize: 10,
+          }}
         />
         <Line
           type="monotone"
@@ -296,7 +307,9 @@ function Dropdown({
       >
         <Icon className="h-3.5 w-3.5" />
         {label}
-        <ChevronDown className={cn("h-3 w-3 transition-transform", open && "rotate-180")} />
+        <ChevronDown
+          className={cn("h-3 w-3 transition-transform", open && "rotate-180")}
+        />
       </button>
       <AnimatePresence>
         {open && (
@@ -320,6 +333,15 @@ function Dropdown({
 /* ------------------------------------------------------------------ */
 
 export default function SignalsPage() {
+  const router = useRouter();
+
+  // Data state
+  const [signals, setSignals] = useState<BoardSignal[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
+
+  // UI state
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [filterOpen, setFilterOpen] = useState(false);
   const [sortOpen, setSortOpen] = useState(false);
@@ -333,8 +355,46 @@ export default function SignalsPage() {
   const [sortBy, setSortBy] = useState<SortField>("confidence");
   const [sortAsc, setSortAsc] = useState(false);
 
+  /* ---- Fetch signals ---- */
+  const fetchSignals = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(`${API_URL}/api/universe/signals`);
+      if (!res.ok) throw new Error(`API returned ${res.status}`);
+      const data: ApiSignalsResponse = await res.json();
+
+      const boardSignals = data.signals.map((s, i) => apiSignalToBoard(s, i));
+      setSignals(boardSignals);
+    } catch (err) {
+      console.error("Failed to fetch signals:", err);
+      setError(
+        err instanceof Error ? err.message : "Failed to fetch signals"
+      );
+      setSignals([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchSignals();
+  }, [fetchSignals]);
+
+  /* ---- Dismiss handler ---- */
+  const handleDismiss = useCallback((id: string) => {
+    setDismissedIds((prev) => new Set(prev).add(id));
+    setExpandedId(null);
+  }, []);
+
+  /* ---- Filter & Sort ---- */
+  const availableSignals = useMemo(
+    () => signals.filter((s) => !dismissedIds.has(s.id)),
+    [signals, dismissedIds]
+  );
+
   const filtered = useMemo(() => {
-    let result = DEMO_SIGNALS.filter((s) => {
+    let result = availableSignals.filter((s) => {
       if (strategyFilter !== "all" && s.strategy !== strategyFilter) return false;
       if (directionFilter !== "all" && s.direction !== directionFilter) return false;
       if (s.confidence < confidenceMin) return false;
@@ -361,12 +421,105 @@ export default function SignalsPage() {
     });
 
     return result;
-  }, [strategyFilter, directionFilter, confidenceMin, sortBy, sortAsc]);
+  }, [availableSignals, strategyFilter, directionFilter, confidenceMin, sortBy, sortAsc]);
 
-  const hasActiveFilters = strategyFilter !== "all" || directionFilter !== "all" || confidenceMin > 0;
+  const hasActiveFilters =
+    strategyFilter !== "all" || directionFilter !== "all" || confidenceMin > 0;
+
+  /* ---- Loading State ---- */
+  if (loading) {
+    return (
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 py-6 sm:py-8">
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-zinc-50">Signal Board</h1>
+          <p className="mt-1 text-sm text-zinc-500">
+            Live trading signals with decay tracking
+          </p>
+        </div>
+        <div className="flex flex-col items-center justify-center py-24">
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+          >
+            <Loader2 className="h-8 w-8 text-violet-400" />
+          </motion.div>
+          <p className="mt-4 text-sm text-zinc-500">Loading signals from universe cache...</p>
+        </div>
+      </div>
+    );
+  }
+
+  /* ---- Error State ---- */
+  if (error) {
+    return (
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 py-6 sm:py-8">
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-zinc-50">Signal Board</h1>
+          <p className="mt-1 text-sm text-zinc-500">
+            Live trading signals with decay tracking
+          </p>
+        </div>
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex flex-col items-center justify-center py-24"
+        >
+          <div className="rounded-xl border border-red-500/20 bg-red-500/5 px-6 py-5 text-center">
+            <p className="text-sm font-medium text-red-400">
+              Failed to load signals
+            </p>
+            <p className="mt-1 text-xs text-zinc-500">{error}</p>
+            <button
+              type="button"
+              onClick={fetchSignals}
+              className="mt-3 flex items-center gap-1.5 rounded-lg bg-zinc-800 px-3 py-1.5 text-xs text-zinc-300 transition-colors hover:bg-zinc-700 mx-auto"
+            >
+              <RefreshCw className="h-3 w-3" />
+              Retry
+            </button>
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
+
+  /* ---- Empty State ---- */
+  if (signals.length === 0) {
+    return (
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 py-6 sm:py-8">
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-zinc-50">Signal Board</h1>
+          <p className="mt-1 text-sm text-zinc-500">
+            Live trading signals with decay tracking
+          </p>
+        </div>
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex flex-col items-center justify-center py-24"
+        >
+          <Inbox className="h-12 w-12 text-zinc-600" />
+          <p className="mt-4 text-sm font-medium text-zinc-400">
+            No signals available
+          </p>
+          <p className="mt-1 text-xs text-zinc-500">
+            Add tickers and refresh your universe in Settings
+          </p>
+          <button
+            type="button"
+            onClick={() => router.push("/settings")}
+            className="mt-4 flex items-center gap-1.5 rounded-lg bg-violet-500/20 px-4 py-2 text-xs font-medium text-violet-300 transition-colors hover:bg-violet-500/30"
+          >
+            <Search className="h-3.5 w-3.5" />
+            Go to Settings
+          </button>
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
-    <div className="mx-auto max-w-7xl px-6 py-8">
+    <div className="mx-auto max-w-7xl px-4 sm:px-6 py-6 sm:py-8">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
@@ -378,10 +531,18 @@ export default function SignalsPage() {
           <div>
             <h1 className="text-2xl font-bold text-zinc-50">Signal Board</h1>
             <p className="mt-1 text-sm text-zinc-500">
-              Live trading signals with decay tracking
+              {availableSignals.length} signal{availableSignals.length !== 1 ? "s" : ""} from universe cache
             </p>
           </div>
           <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={fetchSignals}
+              className="flex items-center gap-1.5 rounded-lg border border-zinc-700 bg-zinc-800/50 px-2.5 py-1.5 text-xs text-zinc-400 hover:text-zinc-200 transition-colors"
+            >
+              <RefreshCw className="h-3 w-3" />
+              Refresh
+            </button>
             {hasActiveFilters && (
               <motion.button
                 initial={{ opacity: 0, scale: 0.9 }}
@@ -402,7 +563,10 @@ export default function SignalsPage() {
               label="Filter"
               icon={SlidersHorizontal}
               open={filterOpen}
-              onToggle={() => { setFilterOpen(!filterOpen); setSortOpen(false); }}
+              onToggle={() => {
+                setFilterOpen(!filterOpen);
+                setSortOpen(false);
+              }}
             >
               <div className="space-y-3">
                 <div>
@@ -445,7 +609,9 @@ export default function SignalsPage() {
                     max={1}
                     step={0.05}
                     value={confidenceMin}
-                    onChange={(e) => setConfidenceMin(parseFloat(e.target.value))}
+                    onChange={(e) =>
+                      setConfidenceMin(parseFloat(e.target.value))
+                    }
                     className="w-full accent-violet-500"
                   />
                 </div>
@@ -455,7 +621,10 @@ export default function SignalsPage() {
               label="Sort"
               icon={ArrowUpDown}
               open={sortOpen}
-              onToggle={() => { setSortOpen(!sortOpen); setFilterOpen(false); }}
+              onToggle={() => {
+                setSortOpen(!sortOpen);
+                setFilterOpen(false);
+              }}
             >
               <div className="space-y-1">
                 {(
@@ -486,7 +655,9 @@ export default function SignalsPage() {
                   >
                     {label}
                     {sortBy === field && (
-                      <span className="text-[10px]">{sortAsc ? "ASC" : "DESC"}</span>
+                      <span className="text-[10px]">
+                        {sortAsc ? "ASC" : "DESC"}
+                      </span>
                     )}
                   </button>
                 ))}
@@ -510,20 +681,20 @@ export default function SignalsPage() {
                 signal.direction === "long"
                   ? ArrowUpRight
                   : signal.direction === "short"
-                  ? ArrowDownRight
-                  : Minus;
+                    ? ArrowDownRight
+                    : Minus;
               const dirColor =
                 signal.direction === "long"
                   ? "text-emerald-400"
                   : signal.direction === "short"
-                  ? "text-red-400"
-                  : "text-zinc-400";
+                    ? "text-red-400"
+                    : "text-zinc-400";
               const dirBadge =
                 signal.direction === "long"
                   ? "bg-emerald-400/10 border-emerald-400/20 text-emerald-400"
                   : signal.direction === "short"
-                  ? "bg-red-400/10 border-red-400/20 text-red-400"
-                  : "bg-zinc-400/10 border-zinc-400/20 text-zinc-400";
+                    ? "bg-red-400/10 border-red-400/20 text-red-400"
+                    : "bg-zinc-400/10 border-zinc-400/20 text-zinc-400";
 
               return (
                 <motion.div
@@ -538,12 +709,16 @@ export default function SignalsPage() {
                     getAgingBorder(signal.age_days, signal.half_life),
                     isExpanded && "col-span-full"
                   )}
-                  onClick={() => setExpandedId(isExpanded ? null : signal.id)}
+                  onClick={() =>
+                    setExpandedId(isExpanded ? null : signal.id)
+                  }
                 >
                   {/* Card Header */}
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <span className="text-lg font-bold text-zinc-50">{signal.ticker}</span>
+                      <span className="text-lg font-bold text-zinc-50">
+                        {signal.ticker}
+                      </span>
                       <span
                         className={cn(
                           "rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase",
@@ -559,7 +734,9 @@ export default function SignalsPage() {
                   {/* Confidence bar */}
                   <div className="mt-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] uppercase text-zinc-500">Confidence</span>
+                      <span className="text-[10px] uppercase text-zinc-500">
+                        Confidence
+                      </span>
                       <span className="text-xs font-semibold text-zinc-300">
                         {(signal.confidence * 100).toFixed(0)}%
                       </span>
@@ -567,8 +744,13 @@ export default function SignalsPage() {
                     <div className="mt-1 h-1.5 rounded-full bg-zinc-800">
                       <motion.div
                         initial={{ width: 0 }}
-                        animate={{ width: `${signal.confidence * 100}%` }}
-                        transition={{ duration: 0.6, delay: i * 0.05 + 0.2 }}
+                        animate={{
+                          width: `${signal.confidence * 100}%`,
+                        }}
+                        transition={{
+                          duration: 0.6,
+                          delay: i * 0.05 + 0.2,
+                        }}
                         className="h-full rounded-full bg-violet-500"
                       />
                     </div>
@@ -577,10 +759,14 @@ export default function SignalsPage() {
                   {/* Status row */}
                   <div className="mt-3 flex items-center justify-between text-xs">
                     <div className="flex items-center gap-1.5">
-                      <span className={cn("h-2 w-2 rounded-full", aging.dot)} />
+                      <span
+                        className={cn("h-2 w-2 rounded-full", aging.dot)}
+                      />
                       <span className="text-zinc-400">{aging.label}</span>
                     </div>
-                    <span className="text-zinc-500">{signal.age_days}d old</span>
+                    <span className="text-zinc-500">
+                      {signal.age_days}d old
+                    </span>
                   </div>
 
                   {/* Half-life & Strategy */}
@@ -604,12 +790,49 @@ export default function SignalsPage() {
                       >
                         <div className="mt-4 border-t border-zinc-800 pt-4">
                           <h3 className="text-sm font-semibold text-zinc-200">
-                            {signal.ticker} — {STRATEGY_LABELS[signal.strategy]}{" "}
-                            <span className="capitalize">{signal.direction}</span>
+                            {signal.ticker} —{" "}
+                            {STRATEGY_LABELS[signal.strategy] || signal.strategy}{" "}
+                            <span className="capitalize">
+                              {signal.direction}
+                            </span>
                           </h3>
                           <p className="mt-1 text-xs text-zinc-500">
                             Generated: {signal.generated_date}
                           </p>
+
+                          {/* Key Metrics */}
+                          <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                            {[
+                              {
+                                label: "Sharpe",
+                                value: signal.sharpe_ratio.toFixed(2),
+                              },
+                              {
+                                label: "Return",
+                                value: `${(signal.potential_return * 100).toFixed(2)}%`,
+                              },
+                              {
+                                label: "Max DD",
+                                value: `${(signal.max_drawdown * 100).toFixed(1)}%`,
+                              },
+                              {
+                                label: "Win Rate",
+                                value: `${(signal.win_rate * 100).toFixed(0)}%`,
+                              },
+                            ].map((metric) => (
+                              <div
+                                key={metric.label}
+                                className="rounded-lg bg-zinc-800/50 px-3 py-2"
+                              >
+                                <p className="text-[10px] uppercase text-zinc-500">
+                                  {metric.label}
+                                </p>
+                                <p className="text-sm font-semibold text-zinc-200">
+                                  {metric.value}
+                                </p>
+                              </div>
+                            ))}
+                          </div>
 
                           {/* Agent Reasoning */}
                           <div className="mt-4 space-y-3">
@@ -617,8 +840,10 @@ export default function SignalsPage() {
                               Agent Reasoning
                             </h4>
                             {signal.agents.map((agent) => {
-                              const AgentIcon = AGENT_ICONS[agent.icon] || FlaskConical;
-                              const agentColor = AGENT_COLORS[agent.icon] || "text-zinc-400";
+                              const AgentIcon =
+                                AGENT_ICONS[agent.icon] || FlaskConical;
+                              const agentColor =
+                                AGENT_COLORS[agent.icon] || "text-zinc-400";
                               return (
                                 <motion.div
                                   key={agent.agent}
@@ -627,12 +852,24 @@ export default function SignalsPage() {
                                   transition={{ duration: 0.2 }}
                                   className="flex gap-3 rounded-lg bg-zinc-800/50 p-3"
                                 >
-                                  <AgentIcon className={cn("mt-0.5 h-4 w-4 shrink-0", agentColor)} />
+                                  <AgentIcon
+                                    className={cn(
+                                      "mt-0.5 h-4 w-4 shrink-0",
+                                      agentColor
+                                    )}
+                                  />
                                   <div>
-                                    <p className={cn("text-xs font-medium", agentColor)}>
+                                    <p
+                                      className={cn(
+                                        "text-xs font-medium",
+                                        agentColor
+                                      )}
+                                    >
                                       {agent.agent}
                                     </p>
-                                    <p className="mt-0.5 text-xs text-zinc-400">{agent.summary}</p>
+                                    <p className="mt-0.5 text-xs text-zinc-400">
+                                      {agent.summary}
+                                    </p>
                                   </div>
                                 </motion.div>
                               );
@@ -645,34 +882,55 @@ export default function SignalsPage() {
                               Signal Decay
                             </h4>
                             <div className="rounded-lg bg-zinc-800/30 p-3">
-                              <MiniICChart data={signal.ic_curve} halfLife={signal.half_life} />
+                              <MiniICChart
+                                data={signal.ic_curve}
+                                halfLife={signal.half_life}
+                              />
                             </div>
                             <div className="mt-2 flex items-center gap-4 text-xs text-zinc-500">
-                              <span>Half-life: {signal.half_life} days</span>
+                              <span>
+                                Half-life: {signal.half_life} days
+                              </span>
                               <span>Age: {signal.age_days} days</span>
                               <span className="flex items-center gap-1">
-                                <span className={cn("h-1.5 w-1.5 rounded-full", aging.dot)} />
+                                <span
+                                  className={cn(
+                                    "h-1.5 w-1.5 rounded-full",
+                                    aging.dot
+                                  )}
+                                />
                                 {aging.label}
                               </span>
                             </div>
                           </div>
 
                           {/* Action Buttons */}
-                          <div className="mt-4 flex gap-2">
+                          <div className="mt-4 flex flex-wrap gap-2">
                             <button
                               type="button"
-                              className="rounded-lg bg-emerald-500/20 px-4 py-2 text-xs font-medium text-emerald-400 transition-colors hover:bg-emerald-500/30"
+                              onClick={() =>
+                                router.push(
+                                  `/chat?q=Analyze ${signal.ticker}`
+                                )
+                              }
+                              className="rounded-lg bg-violet-500/20 px-4 py-2 text-xs font-medium text-violet-400 transition-colors hover:bg-violet-500/30"
                             >
-                              Approve Trade
+                              Analyze
                             </button>
                             <button
                               type="button"
-                              className="rounded-lg bg-yellow-500/20 px-4 py-2 text-xs font-medium text-yellow-400 transition-colors hover:bg-yellow-500/30"
+                              onClick={() =>
+                                router.push(
+                                  `/backtest?ticker=${signal.ticker}`
+                                )
+                              }
+                              className="rounded-lg bg-cyan-500/20 px-4 py-2 text-xs font-medium text-cyan-400 transition-colors hover:bg-cyan-500/30"
                             >
-                              Extend Watch
+                              Run Backtest
                             </button>
                             <button
                               type="button"
+                              onClick={() => handleDismiss(signal.id)}
                               className="rounded-lg bg-red-500/20 px-4 py-2 text-xs font-medium text-red-400 transition-colors hover:bg-red-500/30"
                             >
                               Dismiss
@@ -689,13 +947,15 @@ export default function SignalsPage() {
         </motion.div>
       </LayoutGroup>
 
-      {filtered.length === 0 && (
+      {filtered.length === 0 && availableSignals.length > 0 && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           className="mt-12 text-center"
         >
-          <p className="text-sm text-zinc-500">No signals match your filters.</p>
+          <p className="text-sm text-zinc-500">
+            No signals match your filters.
+          </p>
           <button
             type="button"
             onClick={() => {
@@ -706,6 +966,25 @@ export default function SignalsPage() {
             className="mt-2 text-xs text-violet-400 hover:text-violet-300"
           >
             Clear all filters
+          </button>
+        </motion.div>
+      )}
+
+      {filtered.length === 0 && availableSignals.length === 0 && signals.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="mt-12 text-center"
+        >
+          <p className="text-sm text-zinc-500">
+            All signals have been dismissed.
+          </p>
+          <button
+            type="button"
+            onClick={() => setDismissedIds(new Set())}
+            className="mt-2 text-xs text-violet-400 hover:text-violet-300"
+          >
+            Restore all signals
           </button>
         </motion.div>
       )}

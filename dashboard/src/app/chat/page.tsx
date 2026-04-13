@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback, type KeyboardEvent } from "react";
+import { useState, useRef, useEffect, useCallback, Suspense, type KeyboardEvent } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Send, Bot, User, Trash2, ChevronDown, X } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -387,13 +388,33 @@ function ScrollToBottomButton({ onClick, visible }: { onClick: () => void; visib
 /* -------------------------------------------------------------------------- */
 
 export default function ChatPage() {
+  return (
+    <Suspense>
+      <ChatPageInner />
+    </Suspense>
+  );
+}
+
+function ChatPageInner() {
   const { messages, send, clear, loading } = useChat();
   const [input, setInput] = useState("");
   const [showScrollBtn, setShowScrollBtn] = useState(false);
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const autoSentRef = useRef(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  // Auto-send from query param (e.g. ?q=Analyze+D05.SI)
+  useEffect(() => {
+    const q = searchParams.get("q");
+    if (q && !autoSentRef.current && messages.length === 0) {
+      autoSentRef.current = true;
+      send(q);
+    }
+  }, [searchParams, messages.length, send]);
 
   // Auto-focus input on mount
   useEffect(() => {
@@ -450,9 +471,33 @@ export default function ChatPage() {
   const handleAction = useCallback(
     (action: string) => {
       if (loading) return;
+
+      // Route "Run backtest on X" to the backtest page
+      const backtestMatch = action.match(/^Run backtest on\s+(.+)$/i);
+      if (backtestMatch) {
+        const ticker = backtestMatch[1].trim();
+        router.push(`/backtest?ticker=${encodeURIComponent(ticker)}`);
+        return;
+      }
+
+      // Route "Compare X with peers" to chat with comparison query
+      const compareMatch = action.match(/^Compare\s+(.+?)\s+with peers$/i);
+      if (compareMatch) {
+        send(`Compare ${compareMatch[1]} with its sector peers — which has the best risk-adjusted returns?`);
+        return;
+      }
+
+      // Route "Add X to watchlist" — confirm in chat
+      const watchlistMatch = action.match(/^Add\s+(.+?)\s+to watchlist$/i);
+      if (watchlistMatch) {
+        send(`Add ${watchlistMatch[1]} to my watchlist. What key levels should I monitor?`);
+        return;
+      }
+
+      // Default: send as chat message
       send(action);
     },
-    [loading, send]
+    [loading, send, router]
   );
 
   // Auto-resize textarea
@@ -471,9 +516,9 @@ export default function ChatPage() {
     (messages.length > 0 && messages[messages.length - 1].role === "assistant" && !loading);
 
   return (
-    <div className="flex h-screen flex-col">
+    <div className="flex h-full flex-col">
       {/* Header */}
-      <div className="shrink-0 border-b border-zinc-800 px-6 py-4">
+      <div className="shrink-0 border-b border-zinc-800 px-4 sm:px-6 py-3 sm:py-4">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-lg font-semibold text-zinc-50">Research Chat</h1>
@@ -557,7 +602,7 @@ export default function ChatPage() {
         </AnimatePresence>
 
         {/* Input Row */}
-        <div className="flex items-end gap-3 px-4">
+        <div className="flex items-end gap-2 sm:gap-3 px-0 sm:px-4">
           <div className="relative flex-1">
             <textarea
               ref={inputRef}

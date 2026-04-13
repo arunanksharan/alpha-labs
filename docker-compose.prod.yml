@@ -1,0 +1,80 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: qr_postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-quant_researcher}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - qr_net
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: qr_backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-quant_researcher}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env}
+      JWT_ALGORITHM: ${JWT_ALGORITHM:-HS256}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:?Set ENCRYPTION_KEY in .env}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
+      QR_DEFAULT_MODEL: ${QR_DEFAULT_MODEL:-gpt-5-mini}
+      QR_LOG_LEVEL: ${QR_LOG_LEVEL:-INFO}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+      FRED_API_KEY: ${FRED_API_KEY:-}
+    ports:
+      - "${BACKEND_PORT:-8100}:8100"
+    volumes:
+      - backend_data:/app/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8100/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - qr_net
+
+  dashboard:
+    build:
+      context: ./dashboard
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8100}
+        NEXT_PUBLIC_WS_URL: ${NEXT_PUBLIC_WS_URL:-ws://localhost:8100/ws}
+    container_name: qr_dashboard
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "${DASHBOARD_PORT:-3000}:3000"
+    restart: unless-stopped
+    networks:
+      - qr_net
+
+volumes:
+  pgdata:
+  backend_data:
+
+networks:
+  qr_net:
+    driver: bridge

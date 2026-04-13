@@ -62,7 +62,7 @@ export function EquityCurveChart({ data, title = "Equity Curve" }: EquityCurveCh
               borderRadius: "8px",
               color: "#f4f4f5",
             }}
-            formatter={(value: number) => [`$${value.toLocaleString()}`, "Equity"]}
+            formatter={(value) => [`$${Number(value).toLocaleString()}`, "Equity"]}
           />
           <Area
             type="monotone"

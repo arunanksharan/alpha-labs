@@ -1,0 +1,26 @@
+{
+  "tickers": [
+    "D05.SI",
+    "O39.SI",
+    "U11.SI",
+    "C6L.SI",
+    "RELIANCE.NS",
+    "TCS.NS",
+    "INFY.NS",
+    "HDFCBANK.NS",
+    "AAPL",
+    "NVDA",
+    "MSFT",
+    "GOOG",
+    "META",
+    "AMZN",
+    "TSLA",
+    "SBIN.NS",
+    "ITC.NS"
+  ],
+  "start_date": "2022-01-01",
+  "strategies": [
+    "mean_reversion",
+    "momentum"
+  ]
+}

@@ -1,171 +1,154 @@
-# Singapore Meetup Demo Script
+# Demo Script: Building with Claude Code in Fintech
 
-## Title: "The Agentic Alpha Lab: When AI Agents Do the Research and Humans Just Approve"
+**Event**: Singapore Claude Code + Fintech Meetup
+**Duration**: 15-20 minutes
+**Date**: April 2026
 
-## Duration: 25-30 minutes
+---
 
-## What You Need Running
+## Setup (Before Demo)
+
 ```bash
-# Terminal 1: Backend (start 10 min before demo)
-PYTHONPATH=. uvicorn api.server:app --port 8100
+# Terminal 1 -- Backend (start 10 min before)
+cd quant-researcher
+conda activate zucol
+PYTHONPATH=. uvicorn api.server:app --host 0.0.0.0 --port 8100 --reload
 
-# Terminal 2: Dashboard
-cd dashboard && PORT=3100 npm run dev
-
-# Browser: http://localhost:3100
+# Terminal 2 -- Dashboard
+cd dashboard
+npm install && npm run dev
 ```
 
----
-
-## The Script
-
-### Opening (2 min) — The Hook
-
-**[Show the Morning Brief on the dashboard]**
-
-> "Good evening everyone. I want to show you something. This is not a demo I prepared. This is what my AI research team produced this morning."
-
-**[Point to the Morning Brief]**
-
-> "At 6 AM today, while I was sleeping, 6 AI agents scanned 50 stocks. The Quant computed z-scores and backtested historical patterns. The Technician checked RSI and MACD. The Sentiment Analyst processed earnings calls. The Fundamentalist read SEC filings and computed DCF valuations."
-
-> "By the time I opened my laptop, they had a research brief ready. Two high-conviction trades, a watchlist of three more, and a note about what they learned from last week's signals."
-
-> "This is not a chatbot. This is a research team that never sleeps."
+**Pre-flight checklist**:
+- Verify http://localhost:3000 loads
+- Browser open to Monitor page
+- At least one LLM API key configured in Settings
+- Run a quick analysis on D05.SI to warm the cache
 
 ---
 
-### Act 1 (5 min) — The Problem
+## Demo Flow
 
-> "Let me give you context. There's a project called ai-hedge-fund by Virat Singh — 50,000 stars on GitHub. It has 13 agents who roleplay as famous investors. Warren Buffett agent, Charlie Munger agent, Michael Burry agent. They debate whether to buy a stock."
+### Act 1: The Morning Brief (3 min)
 
-> "It's brilliant. But there's a problem."
+**Navigate to**: Monitor page
 
-**[Pause]**
+> "This is what your morning looks like as a quant researcher. Six agents ran overnight, analyzed stocks across SGX, NSE, and NYSE, and produced this brief."
 
-> "None of them can tell you if their recommendation actually works."
+**Point out on screen**:
+- D05.SI (DBS) -- LONG, 84% confidence
+- RELIANCE.NS -- LONG, 78% confidence
+- The Thought Stream on the right -- each agent's reasoning appearing in real-time
 
-> "Buffett-agent says 'buy NVDA, 85% confidence.' But what's the historical win rate of similar signals? What's the signal decay — does this edge last 3 days or 30 days? Is the confidence real or is it a language model hallucinating a number?"
+**Key talking point**:
 
-> "That's the gap we filled. Our agents don't just have opinions. They have receipts."
-
----
-
-### Act 2 (8 min) — The Live Demo
-
-**[Click "Start Research" on the Monitor page]**
-
-> "Let me show you what happens when I start a research cycle."
-
-**[Watch the Thought Stream populate in real-time]**
-
-> "See the right panel? That's the Thought Stream. Each line is an agent reasoning out loud."
-
-Read a few thoughts as they appear:
-
-> "The Quant is computing z-scores... z = -1.8 for NVDA, not quite at the -2.0 entry threshold yet."
-
-> "The Technician found RSI at 32 — approaching oversold."
-
-> "The Sentiment Analyst processed the last earnings call — management tone shifted positive by 0.19 in the Q&A section compared to prepared remarks. That's unusual."
-
-**[When the Approval Panel appears — amber border]**
-
-> "Now look — the system just paused. The Risk Manager evaluated the signals and found one that exceeds the position limit. It's asking for my approval."
-
-> "This is what we call 'human-on-the-loop.' The agents did 20 minutes of research in 30 seconds. But they won't trade without my say-so."
-
-**[Click "Approve"]**
-
-> "I approve. Now the Validation Agent runs a backtest. And the Decay Agent measures how long this signal is expected to work."
-
-**[Point to the updated metrics]**
-
-> "Sharpe ratio 1.4. Signal half-life 12 days. The deflated Sharpe — which adjusts for the fact that we tested multiple strategies — is still significant at p = 0.03. This isn't a backtest that looks good by accident. It survives statistical scrutiny."
+> "Six agents analyzed this stock. The Quant computed z-scores and mean reversion half-life. The Technician checked RSI and MACD. The Macro Strategist pulled live VIX data. The Sentiment Analyst scored earnings call transcripts. Then they synthesized into one view with a confidence score. Every number is computed from real data -- the LLM only synthesizes, it never fabricates."
 
 ---
 
-### Act 3 (5 min) — The Research Chat
+### Act 2: Deep Dive via Chat (4 min)
 
-**[Navigate to the Chat page]**
+**Action**: Click "Dig Deeper" on D05.SI -- auto-navigates to Chat page
 
-> "Now here's my favorite part. I can talk to the Research Director."
+Or type: "Analyze D05.SI for mean reversion"
 
-**[Type: "Why NVDA and not AMD?"]**
+**Show on screen**:
+- Agent traces appearing one by one
+- Quant agent: z-score calculation, half-life estimate
+- Technician agent: RSI value, MACD crossover status
+- Macro agent: VIX at 19.2 (live data), yield curve state
 
-> "Watch the response. It's not ChatGPT guessing about stocks. Every claim cites a computation."
+**Key talking point**:
 
-**[Read the response as it appears]**
-
-> "Three differences: NVDA z-score is -2.1 versus AMD at -1.4 — NVDA is past the entry threshold, AMD isn't. NVDA revenue grew 94% year-over-year, AMD grew 2%. And historically, when NVDA hits this z-score level with positive fundamentals, it wins 62% of the time across 47 instances."
-
-> "That last number — 62% across 47 instances — the agent didn't guess that. It ran a backtest in real-time."
-
-**[Point to the citation badges]**
-
-> "See the source badges? Quant Engine, Technician, Fundamentalist. Every claim is traceable to a computation. This isn't a language model opinion. It's a research finding."
+> "Every number you see here is computed, not hallucinated. The z-score comes from a real statistical calculation on real price data. The RSI is computed from 14 days of closing prices. The LLM synthesizes these findings into a narrative -- but the math happens first. That is what compute-first, LLM-second means."
 
 ---
 
-### Act 4 (3 min) — Signal Decay (The Differentiator)
+### Act 3: Run a Live Backtest (3 min)
 
-**[Navigate to the Signals page]**
+**Navigate to**: Backtest page
 
-> "This is my favorite visualization. Signal decay."
+**Enter**:
+- Ticker: D05.SI
+- Strategy: Mean Reversion
+- Start: 2024-01-01
+- End: 2026-04-11
 
-**[Point to the signal cards with green/yellow/red borders]**
+**Click**: Run Backtest
 
-> "Each signal card has a colored border. Green means fresh — the signal was just generated and is within its half-life. Yellow means aging. Red means decaying — the statistical edge is eroding."
+**Show on screen**:
+- Equity curve building in real-time
+- Drawdown chart
+- Monthly returns heatmap
+- Key metrics: Sharpe ratio, max drawdown, win rate
 
-> "This is something no other AI finance project does. We don't just generate signals — we measure how long they last. Because in real markets, by the time everyone knows about an edge, the edge is gone."
+**Key talking point**:
 
-> "The NVDA signal has a half-life of 12 days. After 12 days, the information coefficient drops by half. After 24 days, it's basically noise. This tells us exactly when to exit."
-
----
-
-### Act 5 (3 min) — The Architecture (For Technical Audience)
-
-> "For the engineers in the room — this is 35,000 lines of tested, production code. 808 automated tests. Built in a single extended Claude Code session."
-
-> "Nine specialist agents, each backed by real computation — not LLM prompts. The Quant runs actual backtests. The Fundamentalist reads actual SEC filings. The Sentiment Analyst uses NLP on actual earnings calls."
-
-> "Multi-model support — you can switch between Claude, GPT-4, Gemini, or Llama in a single dropdown. We use LiteLLM for routing."
-
-> "The whole system is exposed as an MCP server — which means any AI agent, including Claude Code itself, can use our platform as a tool."
-
-**[If time: show the model selector dropdown in the sidebar]**
+> "This is running against real YFinance data. Real transaction costs are included. No look-ahead bias -- the strategy only sees data available at each point in time. This is the difference between a research toy and a research tool."
 
 ---
 
-### Closing (2 min) — The Vision
+### Act 4: The Settings Story (3 min)
 
-> "What I showed you today is what I believe quant research looks like in 2026 and beyond."
+**Navigate to**: Settings page
 
-> "Not a tool you operate. A research partner that works while you sleep, reasons out loud so you can follow its thinking, and asks for your approval before acting."
+**Show each section**:
 
-> "The question it answers isn't 'should I buy NVDA?' The question is: 'is there a statistically validated, factor-independent, decay-measured alpha signal in NVDA right now, and what's the optimal position size given my current portfolio risk?'"
+1. **API Keys** -- "Users bring their own keys. OpenAI, Anthropic, Gemini, Groq, DeepSeek. Your keys, your data, your costs."
 
-> "That's the question a $1 million quant researcher answers. And now, an AI system can answer it too."
+2. **Model Selector** -- "Choose your LLM. GPT-5-mini for speed, Claude for reasoning, Gemini for long context, Llama for local inference. Switch models without changing code."
 
-> "The project is open source. github.com/arunanksharan/alpha-labs. Thank you."
+3. **Agent System Prompts** -- "Each agent has a customizable system prompt. Want the Contrarian to be more aggressive? Edit the prompt. Want the Fundamentalist to weight DCF higher? Change it here."
+
+**Key talking point**:
+
+> "Open source, bring your own LLM, own your data. No vendor lock-in. No data leaving your machine unless you choose to send it to an LLM provider."
 
 ---
 
-## Backup Demo Paths (If Something Breaks)
+### Act 5: Performance and Signal Health (2 min)
 
-**If the backend is down**: Dashboard runs in demo mode with pre-loaded data. All visualizations work. Skip the "Start Research" live run. Show the pre-populated Morning Brief and chat.
+**Navigate to**: Performance page
 
-**If the chat API times out**: Use the demo mode responses (hardcoded). They're realistic and show the format.
+**Show on screen**:
+- Strategy breakdown by type (mean reversion, momentum, sentiment)
+- Agent accuracy over time
+- Signal Decay chart
 
-**If someone asks a hard question**: The doubt explainer has 21 detailed answers. You've read 9 chapters of Pedersen. You can handle anything about alpha, beta, Sharpe, factor models, or signal decay.
+**Key talking point**:
 
-## Key Numbers to Memorize
+> "Most platforms tell you WHAT to trade. This one tells you WHEN your signal stops working. See this signal decay chart -- it shows you the half-life of each signal type. When the edge disappears, the system tells you. That is how you avoid trading on stale signals."
 
-- 35,000 lines of code
-- 808 tests passing
-- 9 specialist agents
-- 62% win rate (the NVDA example)
-- 12-day half-life (signal decay)
-- 47 historical instances (backtest depth)
-- p = 0.03 (deflated Sharpe significance)
-- 6 agents scan 50 tickers in 30 seconds
+---
+
+## Key Messages to Land
+
+1. **Claude Code can build production-grade fintech in weeks** -- this entire platform was built with Claude Code as the primary development tool.
+
+2. **Compute-first, LLM-second prevents hallucination in finance** -- every metric is calculated from real data before the LLM synthesizes. No fabricated numbers.
+
+3. **Multi-agent architecture gives diverse perspectives** -- like a real trading desk with specialists who disagree, debate, and converge on a view.
+
+4. **Open source, bring your own keys, own your data** -- no vendor lock-in, no data exfiltration, full transparency.
+
+---
+
+## Q&A Prep
+
+**"Is this production-ready?"**
+> Research-grade, yes. Production execution requires regulatory compliance, broker integration, and risk management infrastructure that goes beyond research tooling. The backtesting and signal generation are solid. Execution is a different problem.
+
+**"How do you prevent look-ahead bias?"**
+> Purged cross-validation for any ML model -- no standard k-fold. Feature computation uses only data available at each timestamp. The backtest engine enforces this at the framework level.
+
+**"Why not just use ChatGPT?"**
+> ChatGPT cannot compute z-scores, run backtests, or track signal decay. It can talk about these concepts, but it cannot do the math. This platform does the math first, then uses the LLM to synthesize findings into actionable research. The LLM is the narrator, not the analyst.
+
+**"What exchanges do you support?"**
+> Any ticker YFinance supports -- SGX, NSE, NYSE, NASDAQ, LSE, HKEX, TSE, and more. No API key required for market data.
+
+**"How many agents? Can I add more?"**
+> Six specialist agents today. The architecture is modular -- each agent implements an ABC interface. Adding a new agent means implementing the interface and registering it. The system prompt is editable from the Settings page.
+
+**"What models work best?"**
+> GPT-5-mini gives the best speed-to-quality ratio for agent reasoning. Claude is strongest for long-form synthesis. For local/private deployment, Llama via Groq or Ollama works well. The LiteLLM abstraction means you can switch without code changes.

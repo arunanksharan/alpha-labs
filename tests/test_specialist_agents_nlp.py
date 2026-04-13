@@ -260,8 +260,8 @@ class TestTheMacroStrategist:
         finding = macro_agent.analyze("GOOG", "2024-01-01", "2024-12-31")
 
         thoughts_text = " ".join(finding.thoughts)
-        # Should mention FRED (or fallback)
-        assert "FRED" in thoughts_text or "estimates" in thoughts_text
+        # Should mention data source (YFinance, FRED, or fallback)
+        assert "FRED" in thoughts_text or "estimates" in thoughts_text or "Fetched" in thoughts_text
         # Should mention yield spread
         assert "spread" in thoughts_text.lower() or "10Y-2Y" in thoughts_text
         # Should mention regime

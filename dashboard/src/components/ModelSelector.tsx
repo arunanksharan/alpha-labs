@@ -22,24 +22,13 @@ const PROVIDER_META: Record<string, { icon: typeof Cpu; color: string; label: st
   deepseek: { icon: Cloud, color: "text-cyan-400", label: "DeepSeek" },
 };
 
-const DEFAULT_MODELS: ModelOption[] = [
-  { alias: "claude-sonnet", model: "anthropic/claude-sonnet-4-20250514", provider: "anthropic", available: false },
-  { alias: "gpt-4o", model: "openai/gpt-4o", provider: "openai", available: false },
-  { alias: "gemini-flash", model: "gemini/gemini-2.5-flash", provider: "gemini", available: false },
-  { alias: "llama-70b", model: "groq/llama-3.3-70b-versatile", provider: "groq", available: false },
-  { alias: "deepseek", model: "deepseek/deepseek-chat", provider: "deepseek", available: false },
-  { alias: "claude-haiku", model: "anthropic/claude-haiku-4-5-20251001", provider: "anthropic", available: false },
-  { alias: "gpt-4o-mini", model: "openai/gpt-4o-mini", provider: "openai", available: false },
-  { alias: "gemini-pro", model: "gemini/gemini-2.5-pro", provider: "gemini", available: false },
-];
-
-// Friendly display names
 const MODEL_LABELS: Record<string, string> = {
   "claude-sonnet": "Claude Sonnet 4",
   "claude-haiku": "Claude Haiku 4.5",
   "claude-opus": "Claude Opus 4",
   "gpt-4o": "GPT-4o",
   "gpt-4o-mini": "GPT-4o Mini",
+  "gpt-5-mini": "GPT-5 Mini",
   "o3": "o3",
   "o4-mini": "o4 Mini",
   "gemini-flash": "Gemini 2.5 Flash",
@@ -52,32 +41,25 @@ const MODEL_LABELS: Record<string, string> = {
 export function ModelSelector({ expanded }: { expanded: boolean }) {
   const { selectedModel, setSelectedModel } = useAppStore();
   const [open, setOpen] = useState(false);
-  const [models, setModels] = useState<ModelOption[]>(DEFAULT_MODELS);
+  const [models, setModels] = useState<ModelOption[]>([]);
+  const [defaultModel, setDefaultModel] = useState<string | null>(null);
   const ref = useRef<HTMLDivElement>(null);
 
-  // Fetch available models from API
   useEffect(() => {
     fetch(`${API_URL}/api/models`)
       .then((r) => r.json())
       .then((data) => {
         if (data.models) {
-          // Deduplicate by alias, keep only the "primary" models
-          const primaryAliases = new Set([
-            "claude-sonnet", "gpt-4o", "gemini-flash", "llama-70b", "deepseek",
-            "claude-haiku", "gpt-4o-mini", "gemini-pro",
-          ]);
-          const filtered = (data.models as ModelOption[]).filter(
-            (m) => primaryAliases.has(m.alias)
-          );
-          if (filtered.length > 0) setModels(filtered);
+          setModels(data.models as ModelOption[]);
+        }
+        if (data.default_model && !defaultModel) {
+          setDefaultModel(data.default_model);
+          setSelectedModel(data.default_model);
         }
       })
-      .catch(() => {
-        // Use defaults silently
-      });
-  }, []);
+      .catch(() => {});
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Close on click outside
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
@@ -86,13 +68,20 @@ export function ModelSelector({ expanded }: { expanded: boolean }) {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
+  // Sort: available first, then alphabetical
+  const sortedModels = [...models].sort((a, b) => {
+    if (a.available !== b.available) return a.available ? -1 : 1;
+    return (MODEL_LABELS[a.alias] || a.alias).localeCompare(MODEL_LABELS[b.alias] || b.alias);
+  });
+
+  const availableCount = models.filter((m) => m.available).length;
+
   const currentMeta = PROVIDER_META[
-    models.find((m) => m.alias === selectedModel)?.provider || "anthropic"
-  ] || PROVIDER_META.anthropic;
+    models.find((m) => m.alias === selectedModel)?.provider || "openai"
+  ] || PROVIDER_META.openai;
   const CurrentIcon = currentMeta.icon;
 
   if (!expanded) {
-    // Collapsed: just show the provider icon
     return (
       <button
         type="button"
@@ -107,7 +96,6 @@ export function ModelSelector({ expanded }: { expanded: boolean }) {
 
   return (
     <div ref={ref} className="relative">
-      {/* Trigger */}
       <button
         type="button"
         onClick={() => setOpen(!open)}
@@ -121,14 +109,10 @@ export function ModelSelector({ expanded }: { expanded: boolean }) {
           {MODEL_LABELS[selectedModel] || selectedModel}
         </span>
         <ChevronDown
-          className={cn(
-            "h-3 w-3 shrink-0 text-zinc-500 transition-transform",
-            open && "rotate-180",
-          )}
+          className={cn("h-3 w-3 shrink-0 text-zinc-500 transition-transform", open && "rotate-180")}
         />
       </button>
 
-      {/* Dropdown */}
       <AnimatePresence>
         {open && (
           <motion.div
@@ -140,46 +124,25 @@ export function ModelSelector({ expanded }: { expanded: boolean }) {
           >
             <div className="px-2.5 py-2 border-b border-zinc-800">
               <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
-                Select Model
+                {availableCount > 0 ? `${availableCount} model${availableCount > 1 ? "s" : ""} available` : "No API keys configured"}
               </p>
             </div>
             <div className="max-h-64 overflow-y-auto py-1">
-              {models.map((m) => {
-                const meta = PROVIDER_META[m.provider] || PROVIDER_META.anthropic;
-                const Icon = meta.icon;
-                const isSelected = m.alias === selectedModel;
-
-                return (
-                  <button
-                    key={m.alias}
-                    type="button"
-                    onClick={() => {
-                      setSelectedModel(m.alias);
-                      setOpen(false);
-                    }}
-                    className={cn(
-                      "flex w-full items-center gap-2.5 px-2.5 py-2 text-left transition-colors",
-                      isSelected
-                        ? "bg-violet-500/10 text-violet-300"
-                        : "text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200",
-                    )}
-                  >
-                    <Icon className={cn("h-3.5 w-3.5 shrink-0", meta.color)} />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium truncate">
-                        {MODEL_LABELS[m.alias] || m.alias}
-                      </p>
-                      <p className="text-[10px] text-zinc-600">{meta.label}</p>
-                    </div>
-                    {m.available ? (
-                      <span className="shrink-0 h-1.5 w-1.5 rounded-full bg-emerald-400" title="API key configured" />
-                    ) : (
-                      <span className="shrink-0 h-1.5 w-1.5 rounded-full bg-zinc-600" title="No API key" />
-                    )}
-                    {isSelected && <Check className="h-3 w-3 shrink-0 text-violet-400" />}
-                  </button>
-                );
-              })}
+              {availableCount > 0 && sortedModels.some(m => m.available) && sortedModels.some(m => !m.available) && (
+                <>
+                  {/* Available models */}
+                  {sortedModels.filter(m => m.available).map((m) => renderModelItem(m, selectedModel, setSelectedModel, setOpen))}
+                  {/* Divider */}
+                  <div className="mx-2.5 my-1 border-t border-zinc-800" />
+                  <p className="px-2.5 py-1 text-[9px] uppercase tracking-wider text-zinc-600">Other models</p>
+                  {/* Unavailable models */}
+                  {sortedModels.filter(m => !m.available).map((m) => renderModelItem(m, selectedModel, setSelectedModel, setOpen))}
+                </>
+              )}
+              {/* If no split needed, just render all */}
+              {(availableCount === 0 || !sortedModels.some(m => !m.available)) &&
+                sortedModels.map((m) => renderModelItem(m, selectedModel, setSelectedModel, setOpen))
+              }
             </div>
             <div className="px-2.5 py-1.5 border-t border-zinc-800">
               <p className="text-[10px] text-zinc-600">
@@ -193,5 +156,49 @@ export function ModelSelector({ expanded }: { expanded: boolean }) {
         )}
       </AnimatePresence>
     </div>
+  );
+}
+
+function renderModelItem(
+  m: ModelOption,
+  selectedModel: string,
+  setSelectedModel: (s: string) => void,
+  setOpen: (b: boolean) => void,
+) {
+  const meta = PROVIDER_META[m.provider] || PROVIDER_META.openai;
+  const Icon = meta.icon;
+  const isSelected = m.alias === selectedModel;
+
+  return (
+    <button
+      key={m.alias}
+      type="button"
+      onClick={() => {
+        setSelectedModel(m.alias);
+        setOpen(false);
+      }}
+      className={cn(
+        "flex w-full items-center gap-2.5 px-2.5 py-2 text-left transition-colors",
+        isSelected
+          ? "bg-violet-500/10 text-violet-300"
+          : m.available
+            ? "text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100"
+            : "text-zinc-600 hover:bg-zinc-800/50 hover:text-zinc-500",
+      )}
+    >
+      <Icon className={cn("h-3.5 w-3.5 shrink-0", m.available ? meta.color : "text-zinc-600")} />
+      <div className="flex-1 min-w-0">
+        <p className="text-xs font-medium truncate">
+          {MODEL_LABELS[m.alias] || m.alias}
+        </p>
+        <p className="text-[10px] text-zinc-600">{meta.label}</p>
+      </div>
+      {m.available ? (
+        <span className="shrink-0 h-1.5 w-1.5 rounded-full bg-emerald-400" title="API key configured" />
+      ) : (
+        <span className="shrink-0 h-1.5 w-1.5 rounded-full bg-zinc-600" title="No API key" />
+      )}
+      {isSelected && <Check className="h-3 w-3 shrink-0 text-violet-400" />}
+    </button>
   );
 }

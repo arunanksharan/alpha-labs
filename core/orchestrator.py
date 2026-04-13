@@ -265,7 +265,7 @@ class ResearchOrchestrator:
         # 8. Signal decay analysis
         # ------------------------------------------------------------------
         try:
-            if len(signals_for_backtest) >= 10:
+            if len(signals_for_backtest) >= 5:
                 from analytics.signal_decay import SignalDecayAnalyzer
                 from core.serialization import signals_to_dataframe
 
@@ -275,6 +275,7 @@ class ResearchOrchestrator:
                 decay_json = analyzer.decay_summary(ic_curve)
             else:
                 decay_json = {"note": "Too few signals for decay analysis"}
+                logger.debug("Skipping decay: %d signals (need >= 5)", len(signals_for_backtest))
         except Exception as exc:
             logger.warning("Signal decay analysis failed: %s", exc)
             metadata.setdefault("warnings", []).append(f"signal_decay: {exc}")

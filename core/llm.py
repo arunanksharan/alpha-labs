@@ -33,6 +33,7 @@ MODEL_ALIASES: dict[str, str] = {
     # OpenAI
     "gpt-4o": "openai/gpt-4o",
     "gpt-4o-mini": "openai/gpt-4o-mini",
+    "gpt-5-mini": "openai/gpt-5-mini",
     "o3": "openai/o3",
     "o4-mini": "openai/o4-mini",
     # Google Gemini
@@ -162,6 +163,10 @@ def llm_call(
     }
     if json_mode:
         kwargs["response_format"] = {"type": "json_object"}
+
+    # GPT-5 family only supports temperature=1
+    if "gpt-5" in resolved:
+        kwargs.pop("temperature", None)
 
     logger.info("LLM call: model=%s provider=%s prompt_len=%d", resolved, provider, len(prompt))
 

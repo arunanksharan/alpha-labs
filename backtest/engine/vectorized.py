@@ -134,8 +134,29 @@ class VectorizedBacktestEngine(BaseBacktestEngine):
 
         ticker_returns = pl.concat(returns_parts)
 
-        # --- 4. Merge weights with returns ---
-        merged = weights.join(ticker_returns, on=["date", "ticker"], how="inner")
+        # --- 4. Forward-fill weights to ALL trading dates ---
+        # Signals are sparse (only on entry/exit dates).
+        # A signal means "hold this position until the next signal".
+        # We forward-fill weights across all dates in the returns DataFrame.
+        all_dates_tickers = ticker_returns.select("date", "ticker").unique()
+        filled_weights = all_dates_tickers.join(
+            weights, on=["date", "ticker"], how="left"
+        ).sort(["ticker", "date"]).with_columns(
+            pl.col("weight").forward_fill().over("ticker").fill_null(0.0)
+        )
+
+        # Normalise so sum(|w|) <= 1.0 per date (after fill)
+        filled_weights = filled_weights.with_columns(
+            pl.col("weight").abs().sum().over("date").alias("abs_sum")
+        ).with_columns(
+            pl.when(pl.col("abs_sum") > 1.0)
+            .then(pl.col("weight") / pl.col("abs_sum"))
+            .otherwise(pl.col("weight"))
+            .alias("weight")
+        ).drop("abs_sum")
+
+        # --- 5. Merge filled weights with returns ---
+        merged = filled_weights.join(ticker_returns, on=["date", "ticker"], how="inner")
         # Portfolio return per date = sum(weight * return)
         portfolio = (
             merged.with_columns(
@@ -149,13 +170,13 @@ class VectorizedBacktestEngine(BaseBacktestEngine):
         if len(portfolio) == 0:
             return _empty_backtest_result(initial_capital, commission, slippage)
 
-        # --- 5. Transaction costs ---
-        # Build a full date x ticker weight grid (fill missing with 0).
+        # --- 6. Transaction costs ---
+        # Build a full date x ticker weight grid.
         all_dates = portfolio.select("date").sort("date")
-        all_tickers_in_weights = weights.select("ticker").unique()
+        all_tickers_in_weights = filled_weights.select("ticker").unique()
         date_ticker_grid = all_dates.join(all_tickers_in_weights, how="cross")
         weight_grid = date_ticker_grid.join(
-            weights, on=["date", "ticker"], how="left"
+            filled_weights, on=["date", "ticker"], how="left"
         ).with_columns(pl.col("weight").fill_null(0.0))
 
         # Previous day weight per ticker
@@ -223,8 +244,15 @@ class VectorizedBacktestEngine(BaseBacktestEngine):
             else 0.0
         )
 
-        # Win rate / profit factor from trades
-        win_rate, profit_factor = self._trade_stats(trades_df)
+        # Win rate / profit factor — computed from daily returns, not trade PnL
+        # A "winning day" is a day with positive portfolio return
+        daily_returns = returns_df["returns"]
+        positive_days = daily_returns.filter(daily_returns > 0.0)
+        negative_days = daily_returns.filter(daily_returns < 0.0)
+        win_rate = float(len(positive_days)) / len(daily_returns) if len(daily_returns) > 0 else 0.0
+        sum_pos = float(positive_days.sum()) if len(positive_days) > 0 else 0.0
+        sum_neg = float(negative_days.sum()) if len(negative_days) > 0 else 0.0
+        profit_factor = sum_pos / abs(sum_neg) if sum_neg != 0 else (float("inf") if sum_pos > 0 else 0.0)
 
         start_date = str(portfolio["date"].min())
         end_date = str(portfolio["date"].max())

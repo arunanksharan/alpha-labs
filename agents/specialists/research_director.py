@@ -522,6 +522,11 @@ class ResearchDirector:
             "UNTIL", "BELOW", "ABOVE", "UNDER", "DOING", "GOING",
             "MARKET", "STOCK", "STOCKS", "TODAY", "RIGHT",
         }
+        # Check for exchange-suffixed tickers first (D05.SI, RELIANCE.NS, etc.)
+        exchange_match = re.search(r"\b([A-Z0-9]{1,10}\.[A-Z]{2})\b", question.upper())
+        if exchange_match:
+            return {"type": "ticker_research", "ticker": exchange_match.group(1)}
+
         for candidate_match in re.finditer(r"\b([A-Z]{2,5})\b", question.upper()):
             candidate = candidate_match.group(1)
             if candidate not in noise:
@@ -551,5 +556,16 @@ class ResearchDirector:
             "SHOULD", "THESE", "THOSE", "OTHER", "WHICH", "THEIR",
             "AFTER", "FIRST", "NEVER", "WHERE", "EVERY",
         }
-        candidates = re.findall(r"\b([A-Z]{2,5})\b", text.upper())
-        return [c for c in candidates if c not in noise]
+        # Match exchange-suffixed tickers first (D05.SI, RELIANCE.NS, etc.)
+        exchange_tickers = re.findall(r"\b([A-Z0-9]{1,10}\.[A-Z]{2})\b", text.upper())
+        # Then plain US-style tickers
+        plain_tickers = re.findall(r"\b([A-Z]{2,5})\b", text.upper())
+        plain_filtered = [c for c in plain_tickers if c not in noise]
+        # Exchange tickers take priority, deduplicate
+        seen: set[str] = set()
+        result: list[str] = []
+        for t in exchange_tickers + plain_filtered:
+            if t not in seen:
+                seen.add(t)
+                result.append(t)
+        return result

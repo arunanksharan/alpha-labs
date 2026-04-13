@@ -1,0 +1,49 @@
+1. Write this above way to read the files into:
+  - docs/tutorial                    
+  2. Ultrathink and make the following changes:                         
+  - All the apikeys and values hardcoded in code inside settings.py -> move it to following: data model layer with route, services, repository and storage     
+  into a proper database like postgres and make it completely configurable and adjustable with proper value validations from the UI/frontend.                  
+  - Also ensure there is a configuration agent on the frontend - to which a user can pass a message and it extracts the values as a structured output for      
+  different settings and ingests into database.                                                
+  - Make sure to think from first principles and ensure as many backtesting variables are available as possible to make this truly world class platform.                 
+  3. There is no authentication mechanism. Add an email and passowrd based authentication along with password reset link geeration via SMTP and JWT based      
+  auth layer for both dashboard and backend. This is critical since we are taking this online for deploying this.                           
+  - There needs to be a user and its details, session details, history and event tracking setup as well. Plan that out and write this as well.                 
+  - Crreate the UI - sign in/sign up with email, then a verification link via SMTP (which I will provide) - currently by default make verification for all     
+  accounts as true and then someone can enter the dashboard.                         
+  Do these two major changes. Then we will add more.
+
+## Queuing & Async
+Also, why are we setting the configuraiton variables once and for the entire platform?
+  - SHould it not be set for every backtesting request made and be available for changing on the fly along with the startegy and the specific backtesting
+  request?
+  - Also, should we not have an async queuing mechanism for the backtesting requests which might take time and a list view of all the jobs running for
+  backtest - using - maybe redis stream + celery or some other better mechanism?
+  ultrathink and let me know on these aspects especially how we can make it really robust and production grade instead of keeping everyhting synchronous and
+  in memory which makes it fragile.
+
+  Also since we are making this open source - i would want it highly modular and extensible where anyone can plug n tehir queuing system and worker process   
+  as needed. 
+  How can we make this even better in terms of engineering?             
+
+# Quantdrill
+I want you to write a detailed breakdown of the platform first.                                                                                              
+ultrathink and:
+1. What are the data sources which can power this? - can be pdfs, videos etc - we can use them as knowledge base to generate concepts + add question bank.     
+what do you think? Will it be a copyright violtion? Or can we do this with reference? 
+2. I need a text based agentic interviewer + companion -> it can do mock interviews when asked for - take a response in text or image -> extract the text and  
+give a repsonse like a mock interviewer as well as act as a study companion
+3. THe backend is a robust platform with async capabilities, redis stream, queing, celery where needed - make it world class. Use fastapi + postgres. Or do    
+you think mongo is better for this usecase?
+4. The backend is modular and has layers -> database, respoistory layer, service layer, api layer - everything is abstracted and plug and play                 
+5. There is a simple email and password based authenticaiton with JWT and SMTP based reset password send email link.                                           
+6. Separate the domains - probability, stats, maths, etc along with difficulty layer.
+Make sure these tags and metadata help filter the questions and concepts seamlessly.
+7. Similalry, think of the frontend dashboard and platform where the user can do this. Think in terms of amazing UI/UX and good looking visuals.               
+Think about the supproting AI gent, the models and ecosystems it can support (OpenAI, Gemini, Claude and others). Maybe use Openrouter/Litellm - some sort of  
+model aggregator.
+8. THere needs to be two mechanisms -> BYOK - bring your own key - which can be used for the candidate to use this or pay and subscribe where we provide the   
+key.
+9. It should be mobile responsive as well.
+10. Every user event and their repsonses, learning, progress tracking, gamificaiton through streaks etc need to be tracked.     
+Think really carefully, break it down from first pricniples and create an extensive roadmap for this                 

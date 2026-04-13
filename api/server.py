@@ -1,15 +1,22 @@
 """FastAPI backend for the Agentic Alpha Lab.
 
-Structured JSON responses for both AI agents and dashboards.
-Run with: uvicorn api.server:app --reload
+Production-ready with configurable CORS, rate limiting, and WebSocket auth.
+Run with: PYTHONPATH=. uvicorn api.server:app --host 0.0.0.0 --port 8100
 """
 
 from __future__ import annotations
 
-import logging
+from dotenv import load_dotenv
+load_dotenv()
 
-from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+import logging
+import os
+import time
+from collections import defaultdict
+
+from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
@@ -17,15 +24,54 @@ logger = logging.getLogger(__name__)
 app = FastAPI(
     title="Agentic Alpha Lab API",
     description="Agent-native quant research platform",
-    version="0.1.0",
+    version="1.0.0",
 )
+
+# ---------------------------------------------------------------------------
+# CORS — configurable via CORS_ORIGINS env var
+# ---------------------------------------------------------------------------
+
+CORS_ORIGINS = os.environ.get("CORS_ORIGINS", "http://localhost:3000").split(",")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[o.strip() for o in CORS_ORIGINS],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# ---------------------------------------------------------------------------
+# Rate limiting — in-memory, per IP
+# ---------------------------------------------------------------------------
+
+_rate_store: dict[str, list[float]] = defaultdict(list)
+RATE_LIMIT_GENERAL = int(os.environ.get("RATE_LIMIT_GENERAL", "120"))  # req/min
+RATE_LIMIT_AUTH = int(os.environ.get("RATE_LIMIT_AUTH", "10"))  # req/min
+
+
+@app.middleware("http")
+async def rate_limit_middleware(request: Request, call_next):
+    """Simple token-bucket rate limiter per IP."""
+    client_ip = request.client.host if request.client else "unknown"
+    path = request.url.path
+    now = time.time()
+
+    # Determine limit
+    limit = RATE_LIMIT_AUTH if path.startswith("/api/auth") else RATE_LIMIT_GENERAL
+
+    # Clean old entries (older than 60s)
+    key = f"{client_ip}:{path.split('/')[2] if len(path.split('/')) > 2 else 'general'}"
+    _rate_store[key] = [t for t in _rate_store[key] if now - t < 60]
+
+    if len(_rate_store[key]) >= limit:
+        return JSONResponse(
+            status_code=429,
+            content={"detail": "Too many requests. Please wait before retrying."},
+        )
+
+    _rate_store[key].append(now)
+    return await call_next(request)
 
 
 # ---------------------------------------------------------------------------
@@ -60,22 +106,16 @@ class SignalDecayRequest(BaseModel):
 
 @app.post("/api/research")
 def run_research(req: ResearchRequest) -> dict:
-    """Run full research pipeline. Returns JSON-serialized ResearchResult."""
     from core.orchestrator import ResearchOrchestrator
-
     orchestrator = ResearchOrchestrator()
-    result = orchestrator.run(
-        req.ticker, req.strategy, req.start_date, req.end_date, req.initial_capital
-    )
+    result = orchestrator.run(req.ticker, req.strategy, req.start_date, req.end_date, req.initial_capital)
     return result.to_json()
 
 
 @app.post("/api/backtest")
 def run_backtest(req: BacktestRequest) -> dict:
-    """Quick backtest from CSV data."""
     from core.adapters import csv_to_dataframe
     from core.backtest import BacktestEngineRegistry
-
     signals = csv_to_dataframe(req.signals_csv)
     prices = csv_to_dataframe(req.prices_csv)
     engine = BacktestEngineRegistry.get("vectorized")
@@ -85,10 +125,8 @@ def run_backtest(req: BacktestRequest) -> dict:
 
 @app.post("/api/signal-decay")
 def analyze_signal_decay(req: SignalDecayRequest) -> dict:
-    """Analyze signal decay (IC curves)."""
     from core.adapters import csv_to_dataframe
     from analytics.signal_decay import SignalDecayAnalyzer
-
     signals = csv_to_dataframe(req.signals_csv)
     prices = csv_to_dataframe(req.prices_csv)
     analyzer = SignalDecayAnalyzer(max_horizon=req.max_horizon)
@@ -102,20 +140,17 @@ def analyze_signal_decay(req: SignalDecayRequest) -> dict:
 
 @app.get("/api/strategies")
 def list_strategies() -> dict:
-    """List available strategies."""
     from core.orchestrator import ResearchOrchestrator
-
     return {"strategies": ResearchOrchestrator().list_strategies()}
 
 
 @app.get("/api/health")
 def health() -> dict:
-    return {"status": "ok", "platform": "Agentic Alpha Lab"}
+    return {"status": "ok", "platform": "Agentic Alpha Lab", "version": "1.0.0"}
 
 
 @app.get("/api/models")
 def list_models() -> dict:
-    """List available LLM models and which have API keys configured."""
     from core.llm import get_available_models, check_api_keys, DEFAULT_MODEL
     return {
         "default_model": DEFAULT_MODEL,
@@ -125,35 +160,64 @@ def list_models() -> dict:
 
 
 class LLMTestRequest(BaseModel):
-    model: str = "claude-sonnet"
-    prompt: str = "What is the current outlook for US equities? Answer in 2 sentences."
+    model: str = "gpt-5-mini"
+    prompt: str = "What is the current outlook for equities? Answer in 2 sentences."
 
 
 @app.post("/api/models/test")
 def test_model(req: LLMTestRequest) -> dict:
-    """Test a specific LLM model with a prompt."""
     from core.llm import llm_call
     response = llm_call(req.prompt, model=req.model)
     return response.to_json()
 
 
 # ---------------------------------------------------------------------------
-# Agent routes & WebSocket
+# Routers
 # ---------------------------------------------------------------------------
 
+from api.auth_routes import router as auth_router  # noqa: E402
 from api.agent_routes import router as agent_router  # noqa: E402
 from api.chat_routes import router as chat_router  # noqa: E402
 from api.cycle_routes import router as cycle_router  # noqa: E402
+from api.settings_routes import router as settings_router  # noqa: E402
+from api.universe_routes import router as universe_router  # noqa: E402
+from api.config_agent_routes import router as config_agent_router  # noqa: E402
+from api.job_routes import router as job_router  # noqa: E402
+from api.cron_routes import router as cron_router  # noqa: E402
 from api.events import event_manager  # noqa: E402
 
+app.include_router(auth_router)
 app.include_router(agent_router)
 app.include_router(chat_router)
 app.include_router(cycle_router)
+app.include_router(settings_router)
+app.include_router(universe_router)
+app.include_router(config_agent_router)
+app.include_router(job_router)
+app.include_router(cron_router)
+
+
+# ---------------------------------------------------------------------------
+# WebSocket — with optional token auth
+# ---------------------------------------------------------------------------
 
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket) -> None:
-    """Top-level WebSocket for general event streaming."""
+    """WebSocket for real-time event streaming. Validates token if auth is available."""
+    # Extract token from query params
+    token = websocket.query_params.get("token")
+
+    if token:
+        try:
+            from auth.service import decode_token
+            payload = decode_token(token)
+            if not payload or payload.get("type") != "access":
+                await websocket.close(code=4001, reason="Invalid token")
+                return
+        except Exception:
+            pass  # Auth system not available, allow connection
+
     await event_manager.connect(websocket)
     try:
         while True:

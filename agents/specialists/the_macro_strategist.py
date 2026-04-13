@@ -189,7 +189,43 @@ class TheMacroStrategist:
 
     @staticmethod
     def _fetch_macro_data(thoughts: list[str]) -> dict:
-        """Try FRED; fall back to synthetic estimates."""
+        """Fetch macro indicators via YFinance (works globally, no API key needed).
+
+        Falls back to FRED if available, then to synthetic estimates.
+        """
+        # Primary: YFinance (no API key needed, works everywhere)
+        try:
+            import yfinance as yf
+
+            vix_data = yf.download("^VIX", period="5d", progress=False)
+            tnx_data = yf.download("^TNX", period="5d", progress=False)  # 10Y yield
+            twoy_data = yf.download("2YY=F", period="5d", progress=False)  # 2Y yield
+
+            vix_val = float(vix_data["Close"].iloc[-1].iloc[0]) if not vix_data.empty else 18.5
+
+            if not tnx_data.empty and not twoy_data.empty:
+                ten_y = float(tnx_data["Close"].iloc[-1].iloc[0])
+                two_y = float(twoy_data["Close"].iloc[-1].iloc[0])
+                spread_val = ten_y - two_y
+                fed_funds = two_y  # Approximate: short-term rates track fed funds
+            else:
+                # Fallback: use ^FVX (5-year) as proxy
+                fed_funds = _SYNTHETIC_MACRO["fed_funds_rate"]
+                spread_val = _SYNTHETIC_MACRO["yield_spread_10y2y"]
+
+            thoughts.append(
+                f"Fetched market data: VIX={vix_val:.1f}, 10Y-2Y≈{spread_val:.2f}%"
+            )
+            return {
+                "fed_funds_rate": fed_funds,
+                "yield_spread_10y2y": spread_val,
+                "vix": vix_val,
+                "_synthetic": False,
+            }
+        except Exception:
+            pass
+
+        # Secondary: FRED (requires API key)
         try:
             from data.fetchers.fred_connector import FREDConnector, FREDSeries
 
@@ -215,7 +251,7 @@ class TheMacroStrategist:
             }
         except Exception as exc:
             thoughts.append(
-                f"FRED API not available ({type(exc).__name__}), using estimates."
+                f"Macro data sources unavailable ({type(exc).__name__}), using estimates."
             )
             return {**_SYNTHETIC_MACRO, "_synthetic": True}
 

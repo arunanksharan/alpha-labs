@@ -14,6 +14,8 @@ import {
   Zap,
   ChevronLeft,
   ChevronRight,
+  LogOut,
+  Layers,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAppStore } from "@/lib/store";
@@ -24,11 +26,12 @@ const NAV_ITEMS = [
   { href: "/chat", label: "Chat", icon: MessageSquare },
   { href: "/signals", label: "Signals", icon: Target },
   { href: "/performance", label: "Performance", icon: TrendingUp },
+  { href: "/jobs", label: "Jobs", icon: Layers },
   { href: "/agents", label: "Agents", icon: Bot },
   { href: "/settings", label: "Settings", icon: Settings },
 ] as const;
 
-export default function Sidebar() {
+export default function Sidebar({ onNavigate }: { onNavigate?: () => void } = {}) {
   const pathname = usePathname();
   const [expanded, setExpanded] = useState(true);
   const { mode, setMode, connected } = useAppStore();
@@ -67,6 +70,7 @@ export default function Sidebar() {
             <Link
               key={href}
               href={href}
+              onClick={onNavigate}
               className={cn(
                 "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
                 active
@@ -153,6 +157,32 @@ export default function Sidebar() {
             )}
           </AnimatePresence>
         </div>
+
+        {/* Logout */}
+        <button
+          type="button"
+          onClick={() => {
+            localStorage.removeItem("access_token");
+            localStorage.removeItem("refresh_token");
+            window.location.href = "/login";
+          }}
+          className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-xs text-zinc-500 hover:bg-zinc-700 hover:text-red-400 transition-colors"
+        >
+          <LogOut className="h-3.5 w-3.5 shrink-0" />
+          <AnimatePresence>
+            {expanded && (
+              <motion.span
+                initial={{ opacity: 0, width: 0 }}
+                animate={{ opacity: 1, width: "auto" }}
+                exit={{ opacity: 0, width: 0 }}
+                transition={{ duration: 0.15 }}
+                className="overflow-hidden whitespace-nowrap"
+              >
+                Sign Out
+              </motion.span>
+            )}
+          </AnimatePresence>
+        </button>
       </div>
 
       {/* Collapse toggle */}

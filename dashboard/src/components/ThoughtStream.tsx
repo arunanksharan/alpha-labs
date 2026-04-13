@@ -90,7 +90,8 @@ const AGENT_CONFIG: Record<
   },
 };
 
-function getAgentConfig(agent: string) {
+function getAgentConfig(agent: string | undefined) {
+  if (!agent) return { icon: "\uD83E\uDD16", label: "Agent", dotColor: "bg-zinc-500", badgeBg: "bg-zinc-500/15", badgeText: "text-zinc-400" };
   const key = agent.toLowerCase().replace(/^the\s+/, "");
   for (const [k, v] of Object.entries(AGENT_CONFIG)) {
     if (key.includes(k)) return v;
