@@ -1,0 +1,60 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - complementary [ref=e4]:
+      - generic [ref=e5]:
+        - img [ref=e7]
+        - generic: Agentic Alpha Lab
+      - navigation [ref=e9]:
+        - link "Monitor" [ref=e10] [cursor=pointer]:
+          - /url: /
+          - img [ref=e11]
+          - generic: Monitor
+        - link "Chat" [ref=e13] [cursor=pointer]:
+          - /url: /chat
+          - img [ref=e14]
+          - generic: Chat
+        - link "Signals" [ref=e16] [cursor=pointer]:
+          - /url: /signals
+          - img [ref=e17]
+          - generic: Signals
+        - link "Performance" [ref=e21] [cursor=pointer]:
+          - /url: /performance
+          - img [ref=e22]
+          - generic: Performance
+        - link "Jobs" [ref=e25] [cursor=pointer]:
+          - /url: /jobs
+          - img [ref=e26]
+          - generic: Jobs
+        - link "Agents" [ref=e30] [cursor=pointer]:
+          - /url: /agents
+          - img [ref=e31]
+          - generic: Agents
+        - link "Settings" [ref=e34] [cursor=pointer]:
+          - /url: /settings
+          - img [ref=e35]
+          - generic: Settings
+      - generic [ref=e38]:
+        - button "Demo" [ref=e39]:
+          - generic: Demo
+        - button "Claude Sonnet 4" [ref=e43]:
+          - img [ref=e44]
+          - generic [ref=e46]: Claude Sonnet 4
+          - img [ref=e47]
+        - generic [ref=e49]:
+          - generic: Disconnected
+        - button "Sign Out" [ref=e51]:
+          - img [ref=e52]
+          - generic: Sign Out
+      - button [ref=e55]:
+        - img [ref=e56]
+    - main [ref=e59]:
+      - generic [ref=e60]:
+        - generic [ref=e61]:
+          - heading "Signal Board" [level=1] [ref=e62]
+          - paragraph [ref=e63]: Live trading signals with decay tracking
+        - generic [ref=e64]:
+          - img [ref=e66]
+          - paragraph [ref=e68]: Loading signals from universe cache...
+  - button "Open Next.js Dev Tools" [ref=e74] [cursor=pointer]:
+    - img [ref=e75]
+  - alert [ref=e78]

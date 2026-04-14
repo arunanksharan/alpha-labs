@@ -1,0 +1,7 @@
+[      81ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "new-password"): (More info: https://goo.gl/9p2vKq) %o @ http://localhost:3000/signup:0
+[      81ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "new-password"): (More info: https://goo.gl/9p2vKq) %o @ http://localhost:3000/signup:0
+[     105ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:3000/_next/static/chunks/01x6_next_dist_0sx97b~._.js:2431
+[     119ms] [LOG] [HMR] connected @ http://localhost:3000/_next/static/chunks/01x6_next_dist_0sx97b~._.js:2431
+[  205825ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/01x6_next_dist_0sx97b~._.js:2431
+[  206048ms] [LOG] [Fast Refresh] done in 377ms @ http://localhost:3000/_next/static/chunks/01x6_next_dist_0sx97b~._.js:2431
+[  206327ms] [LOG] [WS] Connected to ws://localhost:8100/ws @ http://localhost:3000/_next/static/chunks/01x6_next_dist_0sx97b~._.js:2431

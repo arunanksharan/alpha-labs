@@ -1,0 +1,698 @@
+- generic [active] [ref=e1]:
+  - button "Open Next.js Dev Tools" [ref=e28] [cursor=pointer]:
+    - img [ref=e29]
+  - alert [ref=e32]
+  - generic [ref=e33]:
+    - complementary [ref=e35]:
+      - generic [ref=e36]:
+        - img [ref=e38]
+        - generic [ref=e40]: Agentic Alpha Lab
+      - navigation [ref=e41]:
+        - link "Monitor" [ref=e42] [cursor=pointer]:
+          - /url: /
+          - img [ref=e43]
+          - generic [ref=e45]: Monitor
+        - link "Chat" [ref=e46] [cursor=pointer]:
+          - /url: /chat
+          - img [ref=e47]
+          - generic [ref=e49]: Chat
+        - link "Signals" [ref=e50] [cursor=pointer]:
+          - /url: /signals
+          - img [ref=e51]
+          - generic [ref=e55]: Signals
+        - link "Performance" [ref=e56] [cursor=pointer]:
+          - /url: /performance
+          - img [ref=e57]
+          - generic [ref=e60]: Performance
+        - link "Jobs" [ref=e61] [cursor=pointer]:
+          - /url: /jobs
+          - img [ref=e62]
+          - generic [ref=e66]: Jobs
+        - link "Agents" [ref=e67] [cursor=pointer]:
+          - /url: /agents
+          - img [ref=e68]
+          - generic [ref=e71]: Agents
+        - link "Settings" [ref=e72] [cursor=pointer]:
+          - /url: /settings
+          - img [ref=e73]
+          - generic [ref=e76]: Settings
+      - generic [ref=e77]:
+        - button "Demo" [ref=e78]:
+          - generic [ref=e81]: Demo
+        - button "GPT-5 Mini" [ref=e83]:
+          - img [ref=e84]
+          - generic [ref=e86]: GPT-5 Mini
+          - img [ref=e87]
+        - generic [ref=e91]: Connected
+        - button "Sign Out" [ref=e92]:
+          - img [ref=e93]
+          - generic [ref=e96]: Sign Out
+      - button [ref=e97]:
+        - img [ref=e98]
+    - main [ref=e101]:
+      - generic [ref=e102]:
+        - generic [ref=e104]:
+          - generic [ref=e105]:
+            - generic [ref=e106]:
+              - generic [ref=e107]:
+                - img [ref=e108]
+                - heading "Agentic Alpha Lab" [level=2] [ref=e110]
+              - paragraph [ref=e112]: API (34 signals)
+            - generic [ref=e116]:
+              - button "D05.SI" [ref=e118]:
+                - generic [ref=e119]: D05.SI
+                - img [ref=e120]
+              - button "Start Research" [ref=e122]:
+                - img [ref=e123]
+                - text: Start Research
+              - button "Voice command" [ref=e126]:
+                - img [ref=e127]
+          - generic [ref=e130]:
+            - generic [ref=e132]:
+              - heading "Good evening, Parul." [level=1] [ref=e133]
+              - generic [ref=e134]: April 14
+            - generic [ref=e136]:
+              - generic [ref=e139]: 2 new signals
+              - generic [ref=e142]: 2 pending approval
+              - generic [ref=e145]: "Portfolio: -0.0% since last session"
+            - heading "Top Conviction" [level=2] [ref=e148]
+            - generic [ref=e150]:
+              - generic [ref=e152]:
+                - generic [ref=e153]: NVDA
+                - generic [ref=e154]: SHORT
+                - generic [ref=e155]:
+                  - text: "Confidence:"
+                  - generic [ref=e156]: 42%
+              - generic [ref=e157]:
+                - generic [ref=e158]:
+                  - generic [ref=e159]: 🔬
+                  - generic [ref=e160]: "The Quant:"
+                  - generic [ref=e161]: mean_reversion, 95 signals generated
+                - generic [ref=e162]:
+                  - generic [ref=e163]: 🛡️
+                  - generic [ref=e164]: "Risk:"
+                  - generic [ref=e165]: Sharpe -2.10, Max DD -25.6%
+                - generic [ref=e166]:
+                  - generic [ref=e167]: 🤖
+                  - generic [ref=e168]: "Backtest:"
+                  - generic [ref=e169]: Return -22.0%, Win rate 44%
+              - generic [ref=e170]:
+                - generic [ref=e171]: "Historical:"
+                - generic [ref=e172]: 44% win
+                - generic [ref=e173]: "-22.0% avg"
+                - generic [ref=e174]: 10d hold
+                - generic [ref=e175]: 95 samples
+              - generic [ref=e176]:
+                - button "Approve $4,200" [ref=e177]:
+                  - img [ref=e178]
+                  - text: Approve
+                  - generic [ref=e181]: $4,200
+                - button "Dig Deeper" [ref=e182]:
+                  - img [ref=e183]
+                  - text: Dig Deeper
+                - button "Reject" [ref=e186]:
+                  - img [ref=e187]
+                  - text: Reject
+            - generic [ref=e191]:
+              - generic [ref=e193]:
+                - generic [ref=e194]: GOOG
+                - generic [ref=e195]: LONG
+                - generic [ref=e196]:
+                  - text: "Confidence:"
+                  - generic [ref=e197]: 17%
+              - generic [ref=e198]:
+                - generic [ref=e199]:
+                  - generic [ref=e200]: 🔬
+                  - generic [ref=e201]: "The Quant:"
+                  - generic [ref=e202]: mean_reversion, 115 signals generated
+                - generic [ref=e203]:
+                  - generic [ref=e204]: 🛡️
+                  - generic [ref=e205]: "Risk:"
+                  - generic [ref=e206]: Sharpe -0.83, Max DD -4.4%
+                - generic [ref=e207]:
+                  - generic [ref=e208]: 🤖
+                  - generic [ref=e209]: "Backtest:"
+                  - generic [ref=e210]: Return 10.3%, Win rate 52%
+              - generic [ref=e211]:
+                - generic [ref=e212]: "Historical:"
+                - generic [ref=e213]: 52% win
+                - generic [ref=e214]: +10.3% avg
+                - generic [ref=e215]: 12d hold
+                - generic [ref=e216]: 115 samples
+              - generic [ref=e217]:
+                - button "Approve $4,200" [ref=e218]:
+                  - img [ref=e219]
+                  - text: Approve
+                  - generic [ref=e222]: $4,200
+                - button "Dig Deeper" [ref=e223]:
+                  - img [ref=e224]
+                  - text: Dig Deeper
+                - button "Reject" [ref=e227]:
+                  - img [ref=e228]
+                  - text: Reject
+            - generic [ref=e232]:
+              - heading "Watchlist" [level=2] [ref=e234]
+              - generic [ref=e236]:
+                - generic [ref=e237]:
+                  - generic [ref=e238]:
+                    - generic [ref=e240]: AMZN
+                    - generic [ref=e241]: SHORT strengthening
+                  - generic [ref=e242]: "Sharpe: -1.96"
+                - generic [ref=e243]:
+                  - generic [ref=e244]:
+                    - generic [ref=e246]: SBIN.NS
+                    - generic [ref=e247]: LONG building
+                  - generic [ref=e248]: "Sharpe: -1.31"
+                - generic [ref=e249]:
+                  - generic [ref=e250]:
+                    - generic [ref=e252]: D05.SI
+                    - generic [ref=e253]: LONG building
+                  - generic [ref=e254]: "Sharpe: -2.03"
+            - generic [ref=e255]:
+              - heading "Portfolio Health" [level=2] [ref=e257]
+              - generic [ref=e260]:
+                - generic [ref=e261]:
+                  - generic [ref=e262]: P&L
+                  - generic [ref=e263]: "-0.0%"
+                - generic [ref=e265]:
+                  - generic [ref=e266]: Sharpe
+                  - generic [ref=e267]: "-0.99"
+                - generic [ref=e269]:
+                  - generic [ref=e270]: VaR
+                  - generic [ref=e271]: "-25.6%"
+                - generic [ref=e273]:
+                  - generic [ref=e274]: Decay
+                  - img [ref=e275]
+            - generic [ref=e279]:
+              - heading "What I Learned" [level=2] [ref=e281]
+              - generic [ref=e284]:
+                - img [ref=e285]
+                - paragraph [ref=e288]: "9 profitable signals (avg +5.0%): D05.SI, O39.SI, U11.SI, C6L.SI, MSFT, GOOG, META, SBIN.NS, ITC.NS 25 losing signals (avg -1.8%): D05.SI, O39.SI, U11.SI, C6L.SI, RELIANCE.NS, RELIANCE.NS, TCS.NS, TCS.NS, INFY.NS, INFY.NS, HDFCBANK.NS, HDFCBANK.NS, AAPL, AAPL, NVDA, NVDA, MSFT, GOOG, META, AMZN, AMZN, TSLA, TSLA, SBIN.NS, ITC.NS → Best performing: GOOG via mean_reversion (+10.3%)"
+          - generic [ref=e289]:
+            - generic [ref=e290]:
+              - heading "Equity Curve" [level=3] [ref=e291]
+              - application [ref=e294]:
+                - generic [ref=e307]:
+                  - generic [ref=e308]:
+                    - generic [ref=e310]: 2023-04-11
+                    - generic [ref=e312]: 2023-09-10
+                  - generic [ref=e313]:
+                    - generic [ref=e315]: $0k
+                    - generic [ref=e317]: $30k
+                    - generic [ref=e319]: $60k
+                    - generic [ref=e321]: $90k
+                    - generic [ref=e323]: $120k
+            - generic [ref=e324]:
+              - generic [ref=e325]:
+                - heading "Signal Decay — IC Curve" [level=3] [ref=e326]
+                - generic [ref=e327]: "Half-life: 12.3 days"
+              - application [ref=e330]:
+                - generic [ref=e340]:
+                  - generic [ref=e341]:
+                    - generic [ref=e343]: "2"
+                    - generic [ref=e345]: "5"
+                    - generic [ref=e347]: "8"
+                    - generic [ref=e349]: "11"
+                    - generic [ref=e351]: "14"
+                    - generic [ref=e353]: "18"
+                    - generic [ref=e355]: "22"
+                    - generic [ref=e357]: "26"
+                    - generic [ref=e359]: "30"
+                  - generic [ref=e360]: Forward Days
+                  - generic [ref=e361]:
+                    - generic [ref=e363]: "0"
+                    - generic [ref=e365]: "0.025"
+                    - generic [ref=e367]: "0.05"
+                    - generic [ref=e369]: "0.075"
+                    - generic [ref=e371]: "0.1"
+                  - generic [ref=e372]: IC
+                  - generic [ref=e373]: ½
+          - generic [ref=e374]:
+            - generic [ref=e375]:
+              - heading "Active Signals" [level=2] [ref=e376]
+              - generic [ref=e378]: 17 active
+            - generic [ref=e379]:
+              - generic [ref=e381] [cursor=pointer]:
+                - generic [ref=e382]:
+                  - generic [ref=e383]:
+                    - generic [ref=e384]: D05.SI
+                    - generic [ref=e385]: LONG
+                  - img [ref=e386]
+                - generic [ref=e389]:
+                  - generic [ref=e390]:
+                    - paragraph [ref=e391]: Confidence
+                    - paragraph [ref=e394]: 41%
+                  - generic [ref=e395]:
+                    - paragraph [ref=e396]: Date
+                    - paragraph [ref=e397]: 2026-04-14
+              - generic [ref=e399] [cursor=pointer]:
+                - generic [ref=e400]:
+                  - generic [ref=e401]:
+                    - generic [ref=e402]: D05.SI
+                    - generic [ref=e403]: FLAT
+                  - img [ref=e404]
+                - generic [ref=e405]:
+                  - generic [ref=e406]:
+                    - paragraph [ref=e407]: Confidence
+                    - paragraph [ref=e409]: 0%
+                  - generic [ref=e410]:
+                    - paragraph [ref=e411]: Date
+                    - paragraph [ref=e412]: 2026-04-14
+              - generic [ref=e414] [cursor=pointer]:
+                - generic [ref=e415]:
+                  - generic [ref=e416]:
+                    - generic [ref=e417]: O39.SI
+                    - generic [ref=e418]: LONG
+                  - img [ref=e419]
+                - generic [ref=e422]:
+                  - generic [ref=e423]:
+                    - paragraph [ref=e424]: Confidence
+                    - paragraph [ref=e427]: 48%
+                  - generic [ref=e428]:
+                    - paragraph [ref=e429]: Date
+                    - paragraph [ref=e430]: 2026-04-14
+              - generic [ref=e432] [cursor=pointer]:
+                - generic [ref=e433]:
+                  - generic [ref=e434]:
+                    - generic [ref=e435]: O39.SI
+                    - generic [ref=e436]: FLAT
+                  - img [ref=e437]
+                - generic [ref=e438]:
+                  - generic [ref=e439]:
+                    - paragraph [ref=e440]: Confidence
+                    - paragraph [ref=e442]: 0%
+                  - generic [ref=e443]:
+                    - paragraph [ref=e444]: Date
+                    - paragraph [ref=e445]: 2026-04-14
+              - generic [ref=e447] [cursor=pointer]:
+                - generic [ref=e448]:
+                  - generic [ref=e449]:
+                    - generic [ref=e450]: U11.SI
+                    - generic [ref=e451]: LONG
+                  - img [ref=e452]
+                - generic [ref=e455]:
+                  - generic [ref=e456]:
+                    - paragraph [ref=e457]: Confidence
+                    - paragraph [ref=e460]: 52%
+                  - generic [ref=e461]:
+                    - paragraph [ref=e462]: Date
+                    - paragraph [ref=e463]: 2026-04-14
+              - generic [ref=e465] [cursor=pointer]:
+                - generic [ref=e466]:
+                  - generic [ref=e467]:
+                    - generic [ref=e468]: U11.SI
+                    - generic [ref=e469]: FLAT
+                  - img [ref=e470]
+                - generic [ref=e471]:
+                  - generic [ref=e472]:
+                    - paragraph [ref=e473]: Confidence
+                    - paragraph [ref=e475]: 0%
+                  - generic [ref=e476]:
+                    - paragraph [ref=e477]: Date
+                    - paragraph [ref=e478]: 2026-04-14
+              - generic [ref=e480] [cursor=pointer]:
+                - generic [ref=e481]:
+                  - generic [ref=e482]:
+                    - generic [ref=e483]: C6L.SI
+                    - generic [ref=e484]: LONG
+                  - img [ref=e485]
+                - generic [ref=e488]:
+                  - generic [ref=e489]:
+                    - paragraph [ref=e490]: Confidence
+                    - paragraph [ref=e493]: 52%
+                  - generic [ref=e494]:
+                    - paragraph [ref=e495]: Date
+                    - paragraph [ref=e496]: 2026-04-14
+              - generic [ref=e498] [cursor=pointer]:
+                - generic [ref=e499]:
+                  - generic [ref=e500]:
+                    - generic [ref=e501]: C6L.SI
+                    - generic [ref=e502]: FLAT
+                  - img [ref=e503]
+                - generic [ref=e504]:
+                  - generic [ref=e505]:
+                    - paragraph [ref=e506]: Confidence
+                    - paragraph [ref=e508]: 0%
+                  - generic [ref=e509]:
+                    - paragraph [ref=e510]: Date
+                    - paragraph [ref=e511]: 2026-04-14
+              - generic [ref=e513] [cursor=pointer]:
+                - generic [ref=e515]:
+                  - generic [ref=e516]: RELIANCE.NS
+                  - generic [ref=e517]: SHORT
+                - generic [ref=e520]:
+                  - generic [ref=e521]:
+                    - paragraph [ref=e522]: Confidence
+                    - paragraph [ref=e525]: 49%
+                  - generic [ref=e526]:
+                    - paragraph [ref=e527]: Date
+                    - paragraph [ref=e528]: 2026-04-14
+              - generic [ref=e530] [cursor=pointer]:
+                - generic [ref=e532]:
+                  - generic [ref=e533]: RELIANCE.NS
+                  - generic [ref=e534]: FLAT
+                - generic [ref=e535]:
+                  - generic [ref=e536]:
+                    - paragraph [ref=e537]: Confidence
+                    - paragraph [ref=e539]: 0%
+                  - generic [ref=e540]:
+                    - paragraph [ref=e541]: Date
+                    - paragraph [ref=e542]: 2026-04-14
+              - generic [ref=e544] [cursor=pointer]:
+                - generic [ref=e545]:
+                  - generic [ref=e546]:
+                    - generic [ref=e547]: TCS.NS
+                    - generic [ref=e548]: SHORT
+                  - img [ref=e549]
+                - generic [ref=e552]:
+                  - generic [ref=e553]:
+                    - paragraph [ref=e554]: Confidence
+                    - paragraph [ref=e556]: 55%
+                  - generic [ref=e557]:
+                    - paragraph [ref=e558]: Date
+                    - paragraph [ref=e559]: 2026-04-14
+              - generic [ref=e561] [cursor=pointer]:
+                - generic [ref=e562]:
+                  - generic [ref=e563]:
+                    - generic [ref=e564]: TCS.NS
+                    - generic [ref=e565]: FLAT
+                  - img [ref=e566]
+                - generic [ref=e567]:
+                  - generic [ref=e568]:
+                    - paragraph [ref=e569]: Confidence
+                    - paragraph [ref=e571]: 0%
+                  - generic [ref=e572]:
+                    - paragraph [ref=e573]: Date
+                    - paragraph [ref=e574]: 2026-04-14
+              - generic [ref=e576] [cursor=pointer]:
+                - generic [ref=e577]:
+                  - generic [ref=e578]:
+                    - generic [ref=e579]: INFY.NS
+                    - generic [ref=e580]: SHORT
+                  - img [ref=e581]
+                - generic [ref=e584]:
+                  - generic [ref=e585]:
+                    - paragraph [ref=e586]: Confidence
+                    - paragraph [ref=e588]: 48%
+                  - generic [ref=e589]:
+                    - paragraph [ref=e590]: Date
+                    - paragraph [ref=e591]: 2026-04-14
+              - generic [ref=e593] [cursor=pointer]:
+                - generic [ref=e594]:
+                  - generic [ref=e595]:
+                    - generic [ref=e596]: INFY.NS
+                    - generic [ref=e597]: FLAT
+                  - img [ref=e598]
+                - generic [ref=e599]:
+                  - generic [ref=e600]:
+                    - paragraph [ref=e601]: Confidence
+                    - paragraph [ref=e603]: 0%
+                  - generic [ref=e604]:
+                    - paragraph [ref=e605]: Date
+                    - paragraph [ref=e606]: 2026-04-14
+              - generic [ref=e608] [cursor=pointer]:
+                - generic [ref=e610]:
+                  - generic [ref=e611]: HDFCBANK.NS
+                  - generic [ref=e612]: SHORT
+                - generic [ref=e615]:
+                  - generic [ref=e616]:
+                    - paragraph [ref=e617]: Confidence
+                    - paragraph [ref=e619]: 51%
+                  - generic [ref=e620]:
+                    - paragraph [ref=e621]: Date
+                    - paragraph [ref=e622]: 2026-04-14
+              - generic [ref=e624] [cursor=pointer]:
+                - generic [ref=e626]:
+                  - generic [ref=e627]: HDFCBANK.NS
+                  - generic [ref=e628]: FLAT
+                - generic [ref=e629]:
+                  - generic [ref=e630]:
+                    - paragraph [ref=e631]: Confidence
+                    - paragraph [ref=e633]: 0%
+                  - generic [ref=e634]:
+                    - paragraph [ref=e635]: Date
+                    - paragraph [ref=e636]: 2026-04-14
+              - generic [ref=e638] [cursor=pointer]:
+                - generic [ref=e639]:
+                  - generic [ref=e640]:
+                    - generic [ref=e641]: AAPL
+                    - generic [ref=e642]: SHORT
+                  - img [ref=e643]
+                - generic [ref=e646]:
+                  - generic [ref=e647]:
+                    - paragraph [ref=e648]: Confidence
+                    - paragraph [ref=e650]: 45%
+                  - generic [ref=e651]:
+                    - paragraph [ref=e652]: Date
+                    - paragraph [ref=e653]: 2026-04-14
+              - generic [ref=e655] [cursor=pointer]:
+                - generic [ref=e656]:
+                  - generic [ref=e657]:
+                    - generic [ref=e658]: AAPL
+                    - generic [ref=e659]: FLAT
+                  - img [ref=e660]
+                - generic [ref=e661]:
+                  - generic [ref=e662]:
+                    - paragraph [ref=e663]: Confidence
+                    - paragraph [ref=e665]: 0%
+                  - generic [ref=e666]:
+                    - paragraph [ref=e667]: Date
+                    - paragraph [ref=e668]: 2026-04-14
+              - generic [ref=e670] [cursor=pointer]:
+                - generic [ref=e671]:
+                  - generic [ref=e672]:
+                    - generic [ref=e673]: NVDA
+                    - generic [ref=e674]: SHORT
+                  - img [ref=e675]
+                - generic [ref=e678]:
+                  - generic [ref=e679]:
+                    - paragraph [ref=e680]: Confidence
+                    - paragraph [ref=e682]: 42%
+                  - generic [ref=e683]:
+                    - paragraph [ref=e684]: Date
+                    - paragraph [ref=e685]: 2026-04-14
+              - generic [ref=e687] [cursor=pointer]:
+                - generic [ref=e688]:
+                  - generic [ref=e689]:
+                    - generic [ref=e690]: NVDA
+                    - generic [ref=e691]: FLAT
+                  - img [ref=e692]
+                - generic [ref=e693]:
+                  - generic [ref=e694]:
+                    - paragraph [ref=e695]: Confidence
+                    - paragraph [ref=e697]: 0%
+                  - generic [ref=e698]:
+                    - paragraph [ref=e699]: Date
+                    - paragraph [ref=e700]: 2026-04-14
+              - generic [ref=e702] [cursor=pointer]:
+                - generic [ref=e703]:
+                  - generic [ref=e704]:
+                    - generic [ref=e705]: MSFT
+                    - generic [ref=e706]: LONG
+                  - img [ref=e707]
+                - generic [ref=e710]:
+                  - generic [ref=e711]:
+                    - paragraph [ref=e712]: Confidence
+                    - paragraph [ref=e714]: 33%
+                  - generic [ref=e715]:
+                    - paragraph [ref=e716]: Date
+                    - paragraph [ref=e717]: 2026-04-14
+              - generic [ref=e719] [cursor=pointer]:
+                - generic [ref=e720]:
+                  - generic [ref=e721]:
+                    - generic [ref=e722]: MSFT
+                    - generic [ref=e723]: FLAT
+                  - img [ref=e724]
+                - generic [ref=e725]:
+                  - generic [ref=e726]:
+                    - paragraph [ref=e727]: Confidence
+                    - paragraph [ref=e729]: 0%
+                  - generic [ref=e730]:
+                    - paragraph [ref=e731]: Date
+                    - paragraph [ref=e732]: 2026-04-14
+              - generic [ref=e734] [cursor=pointer]:
+                - generic [ref=e735]:
+                  - generic [ref=e736]:
+                    - generic [ref=e737]: GOOG
+                    - generic [ref=e738]: LONG
+                  - img [ref=e739]
+                - generic [ref=e742]:
+                  - generic [ref=e743]:
+                    - paragraph [ref=e744]: Confidence
+                    - paragraph [ref=e746]: 17%
+                  - generic [ref=e747]:
+                    - paragraph [ref=e748]: Date
+                    - paragraph [ref=e749]: 2026-04-14
+              - generic [ref=e751] [cursor=pointer]:
+                - generic [ref=e752]:
+                  - generic [ref=e753]:
+                    - generic [ref=e754]: GOOG
+                    - generic [ref=e755]: FLAT
+                  - img [ref=e756]
+                - generic [ref=e757]:
+                  - generic [ref=e758]:
+                    - paragraph [ref=e759]: Confidence
+                    - paragraph [ref=e761]: 0%
+                  - generic [ref=e762]:
+                    - paragraph [ref=e763]: Date
+                    - paragraph [ref=e764]: 2026-04-14
+              - generic [ref=e766] [cursor=pointer]:
+                - generic [ref=e767]:
+                  - generic [ref=e768]:
+                    - generic [ref=e769]: META
+                    - generic [ref=e770]: LONG
+                  - img [ref=e771]
+                - generic [ref=e774]:
+                  - generic [ref=e775]:
+                    - paragraph [ref=e776]: Confidence
+                    - paragraph [ref=e778]: 15%
+                  - generic [ref=e779]:
+                    - paragraph [ref=e780]: Date
+                    - paragraph [ref=e781]: 2026-04-14
+              - generic [ref=e783] [cursor=pointer]:
+                - generic [ref=e784]:
+                  - generic [ref=e785]:
+                    - generic [ref=e786]: META
+                    - generic [ref=e787]: FLAT
+                  - img [ref=e788]
+                - generic [ref=e789]:
+                  - generic [ref=e790]:
+                    - paragraph [ref=e791]: Confidence
+                    - paragraph [ref=e793]: 0%
+                  - generic [ref=e794]:
+                    - paragraph [ref=e795]: Date
+                    - paragraph [ref=e796]: 2026-04-14
+              - generic [ref=e798] [cursor=pointer]:
+                - generic [ref=e799]:
+                  - generic [ref=e800]:
+                    - generic [ref=e801]: AMZN
+                    - generic [ref=e802]: SHORT
+                  - img [ref=e803]
+                - generic [ref=e806]:
+                  - generic [ref=e807]:
+                    - paragraph [ref=e808]: Confidence
+                    - paragraph [ref=e810]: 39%
+                  - generic [ref=e811]:
+                    - paragraph [ref=e812]: Date
+                    - paragraph [ref=e813]: 2026-04-14
+              - generic [ref=e815] [cursor=pointer]:
+                - generic [ref=e816]:
+                  - generic [ref=e817]:
+                    - generic [ref=e818]: AMZN
+                    - generic [ref=e819]: FLAT
+                  - img [ref=e820]
+                - generic [ref=e821]:
+                  - generic [ref=e822]:
+                    - paragraph [ref=e823]: Confidence
+                    - paragraph [ref=e825]: 0%
+                  - generic [ref=e826]:
+                    - paragraph [ref=e827]: Date
+                    - paragraph [ref=e828]: 2026-04-14
+              - generic [ref=e830] [cursor=pointer]:
+                - generic [ref=e831]:
+                  - generic [ref=e832]:
+                    - generic [ref=e833]: TSLA
+                    - generic [ref=e834]: SHORT
+                  - img [ref=e835]
+                - generic [ref=e838]:
+                  - generic [ref=e839]:
+                    - paragraph [ref=e840]: Confidence
+                    - paragraph [ref=e842]: 17%
+                  - generic [ref=e843]:
+                    - paragraph [ref=e844]: Date
+                    - paragraph [ref=e845]: 2026-04-14
+              - generic [ref=e847] [cursor=pointer]:
+                - generic [ref=e848]:
+                  - generic [ref=e849]:
+                    - generic [ref=e850]: TSLA
+                    - generic [ref=e851]: FLAT
+                  - img [ref=e852]
+                - generic [ref=e853]:
+                  - generic [ref=e854]:
+                    - paragraph [ref=e855]: Confidence
+                    - paragraph [ref=e857]: 0%
+                  - generic [ref=e858]:
+                    - paragraph [ref=e859]: Date
+                    - paragraph [ref=e860]: 2026-04-14
+              - generic [ref=e862] [cursor=pointer]:
+                - generic [ref=e863]:
+                  - generic [ref=e864]:
+                    - generic [ref=e865]: SBIN.NS
+                    - generic [ref=e866]: LONG
+                  - img [ref=e867]
+                - generic [ref=e870]:
+                  - generic [ref=e871]:
+                    - paragraph [ref=e872]: Confidence
+                    - paragraph [ref=e874]: 26%
+                  - generic [ref=e875]:
+                    - paragraph [ref=e876]: Date
+                    - paragraph [ref=e877]: 2026-04-14
+              - generic [ref=e879] [cursor=pointer]:
+                - generic [ref=e880]:
+                  - generic [ref=e881]:
+                    - generic [ref=e882]: SBIN.NS
+                    - generic [ref=e883]: FLAT
+                  - img [ref=e884]
+                - generic [ref=e885]:
+                  - generic [ref=e886]:
+                    - paragraph [ref=e887]: Confidence
+                    - paragraph [ref=e889]: 0%
+                  - generic [ref=e890]:
+                    - paragraph [ref=e891]: Date
+                    - paragraph [ref=e892]: 2026-04-14
+              - generic [ref=e894] [cursor=pointer]:
+                - generic [ref=e895]:
+                  - generic [ref=e896]:
+                    - generic [ref=e897]: ITC.NS
+                    - generic [ref=e898]: LONG
+                  - img [ref=e899]
+                - generic [ref=e902]:
+                  - generic [ref=e903]:
+                    - paragraph [ref=e904]: Confidence
+                    - paragraph [ref=e906]: 48%
+                  - generic [ref=e907]:
+                    - paragraph [ref=e908]: Date
+                    - paragraph [ref=e909]: 2026-04-14
+              - generic [ref=e911] [cursor=pointer]:
+                - generic [ref=e912]:
+                  - generic [ref=e913]:
+                    - generic [ref=e914]: ITC.NS
+                    - generic [ref=e915]: FLAT
+                  - img [ref=e916]
+                - generic [ref=e917]:
+                  - generic [ref=e918]:
+                    - paragraph [ref=e919]: Confidence
+                    - paragraph [ref=e921]: 0%
+                  - generic [ref=e922]:
+                    - paragraph [ref=e923]: Date
+                    - paragraph [ref=e924]: 2026-04-14
+          - generic [ref=e925]:
+            - generic [ref=e926]:
+              - img [ref=e927]
+              - text: 2 events
+            - generic [ref=e929]:
+              - img [ref=e930]
+              - text: 17 active signals
+            - generic [ref=e932]:
+              - img [ref=e933]
+              - text: Sharpe 0.00
+        - generic [ref=e936]:
+          - generic [ref=e937]:
+            - heading "Thought Stream" [level=3] [ref=e938]
+            - generic [ref=e943]: Live
+          - generic [ref=e945]:
+            - generic [ref=e949]:
+              - generic [ref=e950]:
+                - generic [ref=e951]:
+                  - generic [ref=e952]: 🤖
+                  - text: Agent
+                - generic [ref=e953]: 23:16:58
+              - paragraph
+            - generic [ref=e956]:
+              - generic [ref=e957]:
+                - generic [ref=e958]:
+                  - generic [ref=e959]: 🤖
+                  - text: Agent
+                - generic [ref=e960]: 23:16:58
+              - paragraph
+  - generic [ref=e961]: 2023-04-11
