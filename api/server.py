@@ -184,6 +184,7 @@ from api.universe_routes import router as universe_router  # noqa: E402
 from api.config_agent_routes import router as config_agent_router  # noqa: E402
 from api.job_routes import router as job_router  # noqa: E402
 from api.cron_routes import router as cron_router  # noqa: E402
+from api.voice_routes import router as voice_router  # noqa: E402
 from api.events import event_manager  # noqa: E402
 
 app.include_router(auth_router)
@@ -195,6 +196,7 @@ app.include_router(universe_router)
 app.include_router(config_agent_router)
 app.include_router(job_router)
 app.include_router(cron_router)
+app.include_router(voice_router)
 
 
 # ---------------------------------------------------------------------------

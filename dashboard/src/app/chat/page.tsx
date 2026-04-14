@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Send, Bot, User, Trash2, ChevronDown, X } from "lucide-react";
 import { cn, href } from "@/lib/utils";
+import { VoiceInput } from "@/components/VoiceInput";
 import { useChat, type ChatMessage } from "@/hooks/useChat";
 
 /* -------------------------------------------------------------------------- */
@@ -620,6 +621,11 @@ function ChatPageInner() {
               )}
             />
           </div>
+          <VoiceInput
+            onTranscript={(text) => { if (!loading) send(text); }}
+            size="md"
+            placeholder="Voice command"
+          />
           <button
             type="button"
             onClick={handleSend}

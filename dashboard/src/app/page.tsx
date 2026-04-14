@@ -12,6 +12,7 @@ import { EquityCurveChart } from "@/components/EquityCurveChart";
 import { SignalDecayChart } from "@/components/SignalDecayChart";
 import { SignalCard } from "@/components/SignalCard";
 import { useWebSocket } from "@/hooks/useWebSocket";
+import { VoiceInput } from "@/components/VoiceInput";
 import { useAgents } from "@/hooks/useAgents";
 import type { AgentEvent, Signal, BacktestMetrics, EquityCurvePoint, ICCurvePoint } from "@/types";
 
@@ -546,6 +547,11 @@ export default function MonitorPage() {
                 )}
                 {isRunning ? "Agents Running..." : "Start Research"}
               </motion.button>
+              <VoiceInput
+                onTranscript={(text) => router.push(href(`/chat?q=${encodeURIComponent(text)}`))}
+                size="sm"
+                placeholder="Voice command"
+              />
             </div>
           </div>
 
