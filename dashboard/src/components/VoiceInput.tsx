@@ -2,56 +2,57 @@
 
 import { useState, useCallback, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mic, MicOff, Loader2 } from "lucide-react";
-import { cn, API_URL } from "@/lib/utils";
+import { Mic, MicOff, Loader2, Zap } from "lucide-react";
+import { cn, WS_URL } from "@/lib/utils";
 
 interface VoiceInputProps {
+  /** Called with the final transcript when user finishes speaking */
   onTranscript: (text: string) => void;
+  /** Called with streaming LLM response chunks (for real-time display) */
+  onResponseChunk?: (chunk: string) => void;
+  /** Called when the full response is complete */
+  onResponseComplete?: (text: string) => void;
+  /** Called on tool calls (for UI feedback) */
+  onToolCall?: (tool: string, args: Record<string, unknown>) => void;
   className?: string;
   size?: "sm" | "md";
   placeholder?: string;
+  /** If true, sends audio to the voice pipeline for LLM processing.
+   *  If false, just transcribes and calls onTranscript. */
+  pipelineMode?: boolean;
 }
 
 /**
- * Real-time voice input using Deepgram Nova-3 streaming STT via WebSocket.
- * Falls back to browser Web Speech API if Deepgram key is unavailable.
+ * Production voice input using Deepgram Nova-3 streaming STT via the
+ * backend voice pipeline WebSocket.
  *
  * Architecture:
- *   Browser mic (MediaRecorder) → WebSocket → Deepgram Nova-3 → transcript
- *   Audio chunks sent every 250ms for near-zero latency.
+ *   Browser mic (MediaRecorder WebM/Opus)
+ *     → WebSocket /ws/voice
+ *       → Backend: Deepgram STT (streaming)
+ *       → Backend: LLM with tool calling (research, backtest, signals)
+ *     ← JSON messages (transcript, tool calls, response chunks)
  */
-export function VoiceInput({ onTranscript, className, size = "md", placeholder }: VoiceInputProps) {
+export function VoiceInput({
+  onTranscript,
+  onResponseChunk,
+  onResponseComplete,
+  onToolCall,
+  className,
+  size = "md",
+  placeholder,
+  pipelineMode = false,
+}: VoiceInputProps) {
   const [listening, setListening] = useState(false);
+  const [processing, setProcessing] = useState(false);
   const [interim, setInterim] = useState("");
-  const [mode, setMode] = useState<"deepgram" | "browser" | "none">("none");
+  const [status, setStatus] = useState<string>("");
   const wsRef = useRef<WebSocket | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
-  // Detect available STT mode on mount
-  useEffect(() => {
-    // Check if Deepgram key is available via the backend
-    fetch(`${API_URL}/api/settings/keys`)
-      .then((r) => r.json())
-      .then((d) => {
-        // Use Deepgram if OpenAI key is available (Deepgram uses its own key,
-        // but we'll proxy through the backend for key security)
-        setMode("deepgram");
-      })
-      .catch(() => {
-        // Fallback: check browser Web Speech API
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const w = window as any;
-        if (w.SpeechRecognition || w.webkitSpeechRecognition) {
-          setMode("browser");
-        } else {
-          setMode("none");
-        }
-      });
-  }, []);
-
-  // ─── Deepgram Streaming STT ───────────────────────────────────────
-  const startDeepgram = useCallback(async () => {
+  // ─── Start voice session ──────────────────────────────────────
+  const start = useCallback(async () => {
     try {
       // Get mic access
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -64,33 +65,19 @@ export function VoiceInput({ onTranscript, className, size = "md", placeholder }
       });
       streamRef.current = stream;
 
-      // Get Deepgram key from backend (or use OpenAI realtime)
-      // For now, connect directly to Deepgram via their WebSocket API
-      // The backend proxies the key to avoid exposing it in the browser
-      const deepgramKey = await fetch(`${API_URL}/api/voice/key`)
-        .then((r) => r.json())
-        .then((d) => d.key)
-        .catch(() => null);
-
-      if (!deepgramKey) {
-        // Fall back to browser API
-        startBrowser();
-        return;
-      }
-
-      // Connect to Deepgram streaming API
-      const ws = new WebSocket(
-        `wss://api.deepgram.com/v1/listen?model=nova-3&language=en&smart_format=true&interim_results=true&endpointing=300&utterance_end_ms=1500`,
-        ["token", deepgramKey]
-      );
+      // Connect to voice pipeline WebSocket
+      const wsUrl = WS_URL.replace("/ws", "/ws/voice");
+      const ws = new WebSocket(wsUrl);
 
       ws.onopen = () => {
-        // Start recording and streaming audio chunks
-        const recorder = new MediaRecorder(stream, {
-          mimeType: MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
-            ? "audio/webm;codecs=opus"
-            : "audio/webm",
-        });
+        setStatus("Connected to Deepgram Nova-3");
+
+        // Start recording audio and streaming to server
+        const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+          ? "audio/webm;codecs=opus"
+          : "audio/webm";
+
+        const recorder = new MediaRecorder(stream, { mimeType });
 
         recorder.ondataavailable = (e) => {
           if (e.data.size > 0 && ws.readyState === WebSocket.OPEN) {
@@ -100,129 +87,129 @@ export function VoiceInput({ onTranscript, className, size = "md", placeholder }
 
         recorder.start(250); // 250ms chunks for low latency
         recorderRef.current = recorder;
+        setListening(true);
       };
 
       ws.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
-          if (data.type === "Results") {
-            const transcript = data.channel?.alternatives?.[0]?.transcript || "";
-            if (transcript) {
+
+          switch (data.type) {
+            case "ready":
+              setStatus(data.message || "Ready");
+              break;
+
+            case "transcript":
               if (data.is_final) {
                 setInterim("");
-                // Accumulate final transcripts
-                if (data.speech_final) {
-                  // End of utterance — send the complete transcript
+                if (!pipelineMode) {
+                  // Simple mode: just return the transcript
                   stop();
-                  onTranscript(transcript);
+                  onTranscript(data.text);
+                } else {
+                  onTranscript(data.text);
+                  setStatus("Processing...");
+                  setProcessing(true);
                 }
               } else {
-                setInterim(transcript);
+                setInterim(data.text);
               }
-            }
-          }
-          // Handle utterance_end for auto-stop
-          if (data.type === "UtteranceEnd") {
-            const lastTranscript = interim || "";
-            if (lastTranscript) {
-              stop();
-              onTranscript(lastTranscript);
-            }
+              break;
+
+            case "processing":
+              setStatus(data.message || "Analyzing...");
+              setProcessing(true);
+              break;
+
+            case "tool_call":
+              setStatus(`Running ${data.tool}...`);
+              onToolCall?.(data.tool, data.args || {});
+              break;
+
+            case "tool_result":
+              setStatus("Synthesizing response...");
+              break;
+
+            case "response_chunk":
+              onResponseChunk?.(data.text);
+              break;
+
+            case "response_complete":
+              setProcessing(false);
+              setStatus("");
+              onResponseComplete?.(data.text);
+              break;
+
+            case "error":
+              setStatus(`Error: ${data.message}`);
+              setProcessing(false);
+              setTimeout(() => setStatus(""), 3000);
+              break;
           }
         } catch {}
       };
 
-      ws.onerror = () => stop();
-      ws.onclose = () => stop();
+      ws.onerror = () => {
+        setStatus("Connection error");
+        stop();
+      };
+
+      ws.onclose = () => {
+        if (listening) stop();
+      };
 
       wsRef.current = ws;
-      setListening(true);
     } catch (err) {
-      console.error("Microphone access denied:", err);
-      setListening(false);
+      setStatus("Microphone access denied");
+      setTimeout(() => setStatus(""), 3000);
     }
-  }, [onTranscript, interim]);
+  }, [onTranscript, onResponseChunk, onResponseComplete, onToolCall, pipelineMode, listening]);
 
-  // ─── Browser Web Speech API (fallback) ────────────────────────────
-  const startBrowser = useCallback(() => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const w = window as any;
-    const SpeechRecognition = w.SpeechRecognition || w.webkitSpeechRecognition;
-    if (!SpeechRecognition) return;
-
-    const recognition = new SpeechRecognition();
-    recognition.continuous = false;
-    recognition.interimResults = true;
-    recognition.lang = "en-US";
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    recognition.onresult = (event: any) => {
-      let finalText = "";
-      let interimText = "";
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        if (event.results[i].isFinal) finalText += event.results[i][0].transcript;
-        else interimText += event.results[i][0].transcript;
-      }
-      if (interimText) setInterim(interimText);
-      if (finalText) {
-        setInterim("");
-        setListening(false);
-        onTranscript(finalText.trim());
-      }
-    };
-
-    recognition.onerror = () => { setListening(false); setInterim(""); };
-    recognition.onend = () => setListening(false);
-    recognition.start();
-    setListening(true);
-
-    // Store for cleanup
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (window as any).__voiceRecognition = recognition;
-  }, [onTranscript]);
-
-  // ─── Stop ─────────────────────────────────────────────────────────
+  // ─── Stop ─────────────────────────────────────────────────────
   const stop = useCallback(() => {
-    // Stop Deepgram
+    // Stop recorder
     if (recorderRef.current && recorderRef.current.state !== "inactive") {
       recorderRef.current.stop();
+      recorderRef.current = null;
     }
+
+    // Tell server we're done
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-      wsRef.current.close();
+      try {
+        wsRef.current.send(JSON.stringify({ type: "stop" }));
+      } catch {}
+      // Give server time to process, then close
+      setTimeout(() => {
+        if (wsRef.current) {
+          wsRef.current.close();
+          wsRef.current = null;
+        }
+      }, 5000);
     }
+
+    // Stop mic
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((t) => t.stop());
       streamRef.current = null;
-    }
-
-    // Stop browser API
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const recognition = (window as any).__voiceRecognition;
-    if (recognition) {
-      recognition.stop();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      delete (window as any).__voiceRecognition;
     }
 
     setListening(false);
     setInterim("");
   }, []);
 
-  // ─── Toggle ───────────────────────────────────────────────────────
+  // ─── Toggle ───────────────────────────────────────────────────
   const toggle = useCallback(() => {
     if (listening) {
       stop();
-    } else if (mode === "deepgram") {
-      startDeepgram();
-    } else if (mode === "browser") {
-      startBrowser();
+    } else {
+      start();
     }
-  }, [listening, mode, startDeepgram, startBrowser, stop]);
+  }, [listening, start, stop]);
 
   // Cleanup on unmount
-  useEffect(() => { return () => stop(); }, [stop]);
-
-  if (mode === "none") return null;
+  useEffect(() => {
+    return () => stop();
+  }, [stop]);
 
   const iconSize = size === "sm" ? "h-3.5 w-3.5" : "h-4 w-4";
   const btnSize = size === "sm" ? "h-8 w-8" : "h-10 w-10";
@@ -240,38 +227,53 @@ export function VoiceInput({ onTranscript, className, size = "md", placeholder }
           btnSize,
           listening
             ? "bg-red-500 text-white shadow-lg shadow-red-500/30"
-            : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-violet-400",
+            : processing
+              ? "bg-violet-500 text-white shadow-lg shadow-violet-500/30"
+              : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-violet-400",
         )}
-        title={listening ? "Stop listening" : placeholder || "Voice input"}
+        title={listening ? "Stop" : placeholder || "Voice input (Deepgram Nova-3)"}
+        disabled={processing}
       >
-        {listening && (
+        {/* Pulse ring */}
+        {(listening || processing) && (
           <motion.span
-            className="absolute inset-0 rounded-xl border-2 border-red-400"
+            className={cn(
+              "absolute inset-0 rounded-xl border-2",
+              listening ? "border-red-400" : "border-violet-400",
+            )}
             initial={{ scale: 1, opacity: 1 }}
             animate={{ scale: 1.5, opacity: 0 }}
             transition={{ duration: 1.2, repeat: Infinity }}
           />
         )}
-        {listening ? <MicOff className={iconSize} /> : <Mic className={iconSize} />}
+        {processing ? (
+          <Loader2 className={cn(iconSize, "animate-spin")} />
+        ) : listening ? (
+          <MicOff className={iconSize} />
+        ) : (
+          <Mic className={iconSize} />
+        )}
       </motion.button>
 
-      {/* Waveform animation when listening */}
+      {/* Status + waveform */}
       <AnimatePresence>
-        {listening && (
+        {(listening || processing || status) && (
           <motion.div
             initial={{ opacity: 0, width: 0 }}
             animate={{ opacity: 1, width: "auto" }}
             exit={{ opacity: 0, width: 0 }}
-            className="flex items-center gap-1 overflow-hidden"
+            className="flex items-center gap-1.5 overflow-hidden"
           >
             {interim ? (
+              // Live transcription
               <div className="flex items-center gap-1.5 rounded-lg bg-zinc-800/80 px-3 py-1.5 backdrop-blur-sm">
-                <Loader2 className="h-3 w-3 animate-spin text-violet-400 shrink-0" />
-                <span className="text-xs text-zinc-300 whitespace-nowrap max-w-[250px] truncate italic">
+                <Zap className="h-3 w-3 text-violet-400 shrink-0" />
+                <span className="text-xs text-zinc-200 whitespace-nowrap max-w-[300px] truncate">
                   {interim}
                 </span>
               </div>
-            ) : (
+            ) : listening ? (
+              // Waveform animation
               <div className="flex items-center gap-0.5">
                 {[0, 1, 2, 3, 4, 5, 6].map((i) => (
                   <motion.div
@@ -281,11 +283,12 @@ export function VoiceInput({ onTranscript, className, size = "md", placeholder }
                     transition={{ duration: 0.4 + Math.random() * 0.3, repeat: Infinity, delay: i * 0.07 }}
                   />
                 ))}
-                <span className="ml-1.5 text-[10px] text-red-400 font-medium">
-                  {mode === "deepgram" ? "Deepgram Nova-3" : "Listening..."}
-                </span>
+                <span className="ml-1.5 text-[10px] text-red-400 font-medium">Deepgram Nova-3</span>
               </div>
-            )}
+            ) : status ? (
+              // Status text
+              <span className="text-[10px] text-zinc-500 whitespace-nowrap">{status}</span>
+            ) : null}
           </motion.div>
         )}
       </AnimatePresence>

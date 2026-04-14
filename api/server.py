@@ -207,7 +207,6 @@ app.include_router(voice_router)
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket) -> None:
     """WebSocket for real-time event streaming. Validates token if auth is available."""
-    # Extract token from query params
     token = websocket.query_params.get("token")
 
     if token:
@@ -218,7 +217,7 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
                 await websocket.close(code=4001, reason="Invalid token")
                 return
         except Exception:
-            pass  # Auth system not available, allow connection
+            pass
 
     await event_manager.connect(websocket)
     try:
@@ -226,3 +225,43 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
             await websocket.receive_text()
     except WebSocketDisconnect:
         event_manager.disconnect(websocket)
+
+
+@app.websocket("/ws/voice")
+async def voice_websocket_endpoint(websocket: WebSocket) -> None:
+    """Voice research pipeline — Deepgram STT → LLM with tools → text response.
+
+    Protocol:
+        Client sends: binary audio chunks (WebM/Opus from MediaRecorder)
+                      or JSON {"type": "stop"} to end utterance
+        Server sends: JSON messages:
+            {"type": "ready"}
+            {"type": "transcript", "text": "...", "is_final": bool}
+            {"type": "processing", "message": "..."}
+            {"type": "tool_call", "tool": "...", "args": {...}}
+            {"type": "tool_result", "tool": "...", "result": {...}}
+            {"type": "response_chunk", "text": "..."}
+            {"type": "response_complete", "text": "..."}
+            {"type": "error", "message": "..."}
+    """
+    await websocket.accept()
+
+    import json as json_mod
+    from voice.pipeline import handle_voice_session
+
+    async def send_json(data: dict) -> None:
+        try:
+            await websocket.send_text(json_mod.dumps(data))
+        except Exception:
+            pass
+
+    try:
+        await handle_voice_session(websocket, send_json)
+    except WebSocketDisconnect:
+        pass
+    except Exception as e:
+        logger.error("Voice WebSocket error: %s", e)
+        try:
+            await websocket.close(code=1011)
+        except Exception:
+            pass
