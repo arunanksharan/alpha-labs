@@ -270,7 +270,7 @@ function JobRow({ job, expanded, onToggle }: { job: JobData; expanded: boolean; 
 
                     {/* Re-run button */}
                     <button
-                      onClick={(e) => { e.stopPropagation(); window.location.href = `/backtest?ticker=${encodeURIComponent(String(job.params.ticker))}`; }}
+                      onClick={(e) => { e.stopPropagation(); window.location.href = (process.env.NEXT_PUBLIC_BASE_PATH || "") + `/backtest?ticker=${encodeURIComponent(String(job.params.ticker))}`; }}
                       className="flex items-center gap-1.5 rounded-lg border border-zinc-700 px-3 py-1.5 text-[10px] font-medium text-zinc-400 hover:bg-zinc-800 hover:text-violet-400 transition-colors">
                       <RotateCw className="h-3 w-3" /> Re-run with different params
                     </button>

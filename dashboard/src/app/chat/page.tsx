@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useCallback, Suspense, type KeyboardEvent 
 import { useSearchParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Send, Bot, User, Trash2, ChevronDown, X } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, href } from "@/lib/utils";
 import { useChat, type ChatMessage } from "@/hooks/useChat";
 
 /* -------------------------------------------------------------------------- */
@@ -476,7 +476,7 @@ function ChatPageInner() {
       const backtestMatch = action.match(/^Run backtest on\s+(.+)$/i);
       if (backtestMatch) {
         const ticker = backtestMatch[1].trim();
-        router.push(`/backtest?ticker=${encodeURIComponent(ticker)}`);
+        router.push(href(`/backtest?ticker=${encodeURIComponent(ticker)}`));
         return;
       }
 

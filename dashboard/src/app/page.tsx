@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Play, RefreshCw, Activity, Shield, BarChart3, Zap, ChevronDown, Loader2 } from "lucide-react";
-import { cn, API_URL } from "@/lib/utils";
+import { cn, API_URL, href } from "@/lib/utils";
 import { useAppStore } from "@/lib/store";
 import { MorningBrief } from "@/components/MorningBrief";
 import { ThoughtStream } from "@/components/ThoughtStream";
@@ -425,7 +425,7 @@ export default function MonitorPage() {
           body: JSON.stringify({ ticker, strategy: "mean_reversion", start_date: "2023-01-01", end_date: "2026-04-13" }),
         });
       } catch {}
-      router.push("/jobs");
+      router.push(href("/jobs"));
     },
     [router]
   );
@@ -440,7 +440,7 @@ export default function MonitorPage() {
   );
 
   const handleDigDeeper = useCallback((ticker: string) => {
-    router.push(`/chat?q=${encodeURIComponent(`Deep dive on ${ticker} — analyze technicals, fundamentals, and macro outlook`)}`);
+    router.push(href(`/chat?q=${encodeURIComponent(`Deep dive on ${ticker} — analyze technicals, fundamentals, and macro outlook`)}`));
   }, [router]);
 
   /* ── Data source label ── */
@@ -582,7 +582,7 @@ export default function MonitorPage() {
                 <div
                   key={`${signal.ticker}-${i}`}
                   className="cursor-pointer transition-transform hover:scale-[1.02]"
-                  onClick={() => router.push(`/chat?q=${encodeURIComponent(`Analyze ${signal.ticker} for mean reversion`)}`)}
+                  onClick={() => router.push(href(`/chat?q=${encodeURIComponent(`Analyze ${signal.ticker} for mean reversion`)}`))}
                 >
                   <SignalCard
                     signal={signal}

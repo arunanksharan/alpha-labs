@@ -29,7 +29,8 @@ import {
   Tooltip,
   ReferenceLine,
 } from "recharts";
-import { cn, API_URL } from "@/lib/utils";
+import { cn, API_URL, href } from "@/lib/utils";
+
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -507,7 +508,7 @@ export default function SignalsPage() {
           </p>
           <button
             type="button"
-            onClick={() => router.push("/settings")}
+            onClick={() => router.push(href("/settings"))}
             className="mt-4 flex items-center gap-1.5 rounded-lg bg-violet-500/20 px-4 py-2 text-xs font-medium text-violet-300 transition-colors hover:bg-violet-500/30"
           >
             <Search className="h-3.5 w-3.5" />
@@ -909,9 +910,9 @@ export default function SignalsPage() {
                             <button
                               type="button"
                               onClick={() =>
-                                router.push(
+                                router.push(href(
                                   `/chat?q=Analyze ${signal.ticker}`
-                                )
+                                ))
                               }
                               className="rounded-lg bg-violet-500/20 px-4 py-2 text-xs font-medium text-violet-400 transition-colors hover:bg-violet-500/30"
                             >
@@ -920,9 +921,9 @@ export default function SignalsPage() {
                             <button
                               type="button"
                               onClick={() =>
-                                router.push(
+                                router.push(href(
                                   `/backtest?ticker=${signal.ticker}`
-                                )
+                                ))
                               }
                               className="rounded-lg bg-cyan-500/20 px-4 py-2 text-xs font-medium text-cyan-400 transition-colors hover:bg-cyan-500/30"
                             >

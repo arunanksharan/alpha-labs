@@ -16,7 +16,7 @@ import {
   XCircle,
   Play,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, href } from "@/lib/utils";
 import { API_URL } from "@/lib/utils";
 
 type StepStatus = "completed" | "running" | "awaiting" | "pending" | "failed";
@@ -149,7 +149,7 @@ export default function AgentsPage() {
               <p className="mt-1 text-sm text-zinc-500">Monitor the agentic research pipeline in real time</p>
             </div>
             <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
-              onClick={() => router.push("/jobs")}
+              onClick={() => router.push(href("/jobs"))}
               className="flex items-center gap-2 rounded-lg border border-violet-500/50 px-4 py-2 text-sm font-medium text-violet-400 hover:bg-violet-500/10">
               <Play className="h-3.5 w-3.5" /> Submit New Job
             </motion.button>
@@ -230,7 +230,7 @@ export default function AgentsPage() {
             <div className="py-8 text-center">
               <Bot className="mx-auto h-8 w-8 text-zinc-700 mb-2" />
               <p className="text-sm text-zinc-500">No completed jobs yet.</p>
-              <button onClick={() => router.push("/jobs")} className="mt-3 text-xs text-violet-400 hover:text-violet-300">Submit a backtest →</button>
+              <button onClick={() => router.push(href("/jobs"))} className="mt-3 text-xs text-violet-400 hover:text-violet-300">Submit a backtest →</button>
             </div>
           ) : (
             <div className="space-y-2">
@@ -240,7 +240,7 @@ export default function AgentsPage() {
                 const duration = job.completed_at ? `${((new Date(job.completed_at).getTime() - new Date(job.created_at).getTime()) / 1000).toFixed(1)}s` : "";
 
                 return (
-                  <button key={job.id} type="button" onClick={() => router.push("/jobs")}
+                  <button key={job.id} type="button" onClick={() => router.push(href("/jobs"))}
                     className="flex w-full items-center gap-3 rounded-lg border border-zinc-800/50 bg-zinc-900/30 px-3 py-2.5 text-left hover:bg-zinc-800/30 transition-colors">
                     <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-400" />
                     <div className="flex-1 min-w-0">
