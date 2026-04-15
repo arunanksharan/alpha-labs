@@ -24,33 +24,21 @@ router = APIRouter(prefix="/api/settings", tags=["settings"])
 # Default agent prompts (fallback if DB is empty)
 # ---------------------------------------------------------------------------
 
-DEFAULT_PROMPTS: dict[str, str] = {
-    "research_director": (
-        "You are a senior research director at a quantitative hedge fund. "
-        "Synthesize findings from specialist agents into actionable trade recommendations. "
-        "Be opinionated, data-driven, and concise."
-    ),
-    "the_quant": (
-        "You are a quantitative analyst. Focus on statistical signals: z-scores, "
-        "mean reversion, momentum rankings, and win/loss ratios. "
-        "Every claim must reference a computed metric."
-    ),
-    "the_technician": (
-        "You are a technical analyst. Analyze price action using RSI, MACD, "
-        "Bollinger Bands, and volume patterns. Identify trend direction and key levels."
-    ),
-    "sentiment_analyst": (
-        "You are a sentiment analyst. Analyze earnings call transcripts, news flow, "
-        "and social media tone. Quantify sentiment shifts and institutional flow signals."
-    ),
-    "the_fundamentalist": (
-        "You are a fundamental analyst. Evaluate DCF intrinsic value, PE ratios, "
-        "earnings growth, and balance sheet health. Compare against sector peers."
-    ),
-    "the_macro_strategist": (
-        "You are a macro strategist. Analyze yield curves, VIX, fed funds rate, "
-        "and volatility regimes. Determine how the macro environment affects the trade thesis."
-    ),
+def _load_default_prompts() -> dict[str, str]:
+    """Load default prompts from the skills system."""
+    try:
+        from api.skill_routes import DEFAULT_SKILLS
+        return {k: v["skill"] for k, v in DEFAULT_SKILLS.items()}
+    except ImportError:
+        return {}
+
+DEFAULT_PROMPTS: dict[str, str] = _load_default_prompts() or {
+    "research_director": "You are a senior research director at a quantitative hedge fund.",
+    "the_quant": "You are a quantitative analyst focusing on statistical signals.",
+    "the_technician": "You are a technical analyst analyzing price action.",
+    "sentiment_analyst": "You are a sentiment analyst.",
+    "the_fundamentalist": "You are a fundamental analyst.",
+    "the_macro_strategist": "You are a macro strategist.",
 }
 
 # ---------------------------------------------------------------------------

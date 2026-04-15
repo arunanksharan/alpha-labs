@@ -28,7 +28,7 @@ import {
   Play,
   Square,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, BASE_PATH } from "@/lib/utils";
 import { API_URL } from "@/lib/utils";
 
 /* ---------- Constants ---------- */
@@ -720,28 +720,14 @@ export default function SettingsPage() {
           </div>
         </Section>
 
-        {/* ── Agent System Prompts ── */}
-        <Section icon={<Bot className="h-4 w-4 text-cyan-400" />} title="Agent System Prompts" delay={sectionDelay(4)}>
-          <p className="text-xs text-zinc-500 mb-4">Customize the personality and focus of each specialist agent.</p>
-          <div className="space-y-4">
-            {AGENTS.map(({ key, label }) => (
-              <div key={key}>
-                <label className="mb-1.5 block text-xs font-medium text-zinc-400">{label}</label>
-                <textarea value={prompts[key] || ""} onChange={(e) => setPrompts((p) => ({ ...p, [key]: e.target.value }))}
-                  rows={3}
-                  className="w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-xs text-zinc-50 placeholder:text-zinc-600 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500 resize-y"
-                  placeholder={`System prompt for ${label}...`} />
-              </div>
-            ))}
-          </div>
-          <div className="mt-4 flex items-center gap-3">
-            <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }} onClick={handleSavePrompts}
-              disabled={savingPrompts}
-              className="flex items-center gap-2 rounded-lg bg-violet-500 px-4 py-2 text-xs font-medium text-white hover:bg-violet-400">
-              {savingPrompts ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
-              Save Prompts
-            </motion.button>
-            {promptSaveResult && <span className="text-xs text-zinc-500">{promptSaveResult}</span>}
+        {/* ── Agent Skills (link to /skills page) ── */}
+        <Section icon={<Bot className="h-4 w-4 text-cyan-400" />} title="Agent Skills" delay={sectionDelay(4)}>
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-zinc-500">Define each agent's expertise, methodology, and personality using markdown skill files.</p>
+            <a href={`${BASE_PATH}/skills`}
+              className="flex items-center gap-1.5 rounded-lg bg-violet-500/15 border border-violet-500/30 px-4 py-2 text-xs font-medium text-violet-400 hover:bg-violet-500/25 transition-colors shrink-0">
+              Edit Skills
+            </a>
           </div>
         </Section>
 
