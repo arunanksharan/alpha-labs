@@ -200,6 +200,23 @@ app.include_router(cron_router)
 app.include_router(voice_router)
 app.include_router(skill_router)
 
+# ---------------------------------------------------------------------------
+# MCP Server — expose research tools for AI agents
+# ---------------------------------------------------------------------------
+
+try:
+    from fastapi_mcp import FastApiMCP
+    mcp_server = FastApiMCP(
+        app,
+        name="Agentic Alpha Lab",
+        description="Quant research platform with 6 specialist AI agents, backtesting, and signal analysis",
+        include_operations=["run_research", "health", "list_strategies", "list_models"],
+    )
+    mcp_server.mount(mount_path="/mcp")
+    logger.info("MCP server mounted at /mcp")
+except ImportError:
+    logger.info("fastapi-mcp not installed, MCP server disabled")
+
 
 # ---------------------------------------------------------------------------
 # WebSocket — with optional token auth
