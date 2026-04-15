@@ -427,27 +427,42 @@ export default function MonitorPage() {
       if (!res.ok) throw new Error(`API returned ${res.status}`);
       const data = await res.json();
 
+      // Agent name display mapping
+      const AGENT_NAMES: Record<string, string> = {
+        "quant": "Quant", "the_quant": "Quant",
+        "technician": "Technician", "the_technician": "Technician",
+        "TheSentimentAnalyst": "Sentiment", "sentiment": "Sentiment",
+        "TheFundamentalist": "Fundamentalist", "fundamentalist": "Fundamentalist",
+        "TheMacroStrategist": "Macro", "macro": "Macro",
+        "the_contrarian": "Contrarian", "contrarian": "Contrarian",
+      };
+
       // Parse agent_traces and add them one by one with delays
       const traces = data.agent_traces || [];
       for (let i = 0; i < traces.length; i++) {
         const trace = traces[i];
-        const agentName = String(trace.agent || "Agent").replace("the_", "").replace("_", " ");
-        const capitalized = agentName.charAt(0).toUpperCase() + agentName.slice(1);
+        const rawName = String(trace.agent || "Agent");
+        const displayName = AGENT_NAMES[rawName] || rawName.replace(/^the_/, "").replace(/_/g, " ").replace(/^./, (c: string) => c.toUpperCase());
         const thoughts = trace.thoughts || [];
         const signal = trace.signal || "neutral";
         const conf = trace.confidence || 0;
-        const summary = thoughts[0] || `Signal: ${signal} (${(conf * 100).toFixed(0)}%)`;
 
-        // Stagger each agent's appearance
-        await new Promise((r) => setTimeout(r, 300));
-        addThought(capitalized, summary);
+        // Clean up the thought text — remove agent prefix if present
+        let summary = thoughts[0] || `${signal} (${(conf * 100).toFixed(0)}% confidence)`;
+        // Remove redundant prefixes like "Fetched 320 price bars for..."
+        if (summary.startsWith("Fetched")) {
+          summary = `${signal} signal, ${(conf * 100).toFixed(0)}% confidence`;
+        }
+
+        await new Promise((r) => setTimeout(r, 400));
+        addThought(displayName, summary);
       }
 
       // Final synthesis
-      await new Promise((r) => setTimeout(r, 400));
+      await new Promise((r) => setTimeout(r, 500));
       const answer = data.answer || "";
       const signal = answer.includes("bullish") ? "BULLISH" : answer.includes("bearish") ? "BEARISH" : "NEUTRAL";
-      addThought("Director", `Consensus: ${signal} on ${ticker}. ${data.citations?.[0] || ""}`, "decision");
+      addThought("Director", `Consensus: ${signal} on ${ticker}`, "decision");
       setResearchResult(answer);
 
     } catch (err) {

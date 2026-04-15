@@ -16,6 +16,7 @@ import {
   ChevronRight,
   LogOut,
   Layers,
+  BookOpen,
 } from "lucide-react";
 import { cn, BASE_PATH } from "@/lib/utils";
 import { useAppStore } from "@/lib/store";
@@ -27,6 +28,7 @@ const NAV_ITEMS = [
   { href: "/signals", label: "Signals", icon: Target },
   { href: "/performance", label: "Performance", icon: TrendingUp },
   { href: "/jobs", label: "Jobs", icon: Layers },
+  { href: "/skills", label: "Skills", icon: BookOpen },
   { href: "/agents", label: "Agents", icon: Bot },
   { href: "/settings", label: "Settings", icon: Settings },
 ] as const;
