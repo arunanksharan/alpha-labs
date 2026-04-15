@@ -447,9 +447,19 @@ export default function MonitorPage() {
         const signal = trace.signal || "neutral";
         const conf = trace.confidence || 0;
 
-        // Clean up the thought text — remove agent prefix if present
+        // Clean up the thought text
         let summary = thoughts[0] || `${signal} (${(conf * 100).toFixed(0)}% confidence)`;
-        // Remove redundant prefixes like "Fetched 320 price bars for..."
+
+        // Strip agent name prefix from message (e.g., "the_quant: Z-score..." → "Z-score...")
+        const prefixPatterns = [rawName + ":", rawName + " :", displayName + ":"];
+        for (const prefix of prefixPatterns) {
+          if (summary.toLowerCase().startsWith(prefix.toLowerCase())) {
+            summary = summary.slice(prefix.length).trim();
+            break;
+          }
+        }
+
+        // Remove uninformative "Fetched X price bars" messages
         if (summary.startsWith("Fetched")) {
           summary = `${signal} signal, ${(conf * 100).toFixed(0)}% confidence`;
         }

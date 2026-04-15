@@ -90,19 +90,53 @@ const AGENT_CONFIG: Record<
   },
 };
 
+// Map ALL raw API agent names to clean config keys
+const AGENT_NAME_MAP: Record<string, string> = {
+  "the_quant": "quant", "quant": "quant", "Quant": "quant",
+  "the_technician": "technician", "technician": "technician", "Technician": "technician",
+  "TheSentimentAnalyst": "sentiment", "sentiment_analyst": "sentiment", "sentiment": "sentiment", "Sentiment": "sentiment",
+  "TheFundamentalist": "fundamentalist", "the_fundamentalist": "fundamentalist", "fundamentalist": "fundamentalist", "Fundamentalist": "fundamentalist",
+  "TheMacroStrategist": "macro", "the_macro_strategist": "macro", "macro": "macro", "Macro": "macro",
+  "the_contrarian": "contrarian", "contrarian": "contrarian", "Contrarian": "contrarian",
+  "Director": "director", "director": "director", "Research Director": "director",
+  "Risk": "risk", "risk": "risk",
+  "Research": "research", "research": "research",
+};
+
 function getAgentConfig(agent: string | undefined) {
   if (!agent) return { icon: "\uD83E\uDD16", label: "Agent", dotColor: "bg-zinc-500", badgeBg: "bg-zinc-500/15", badgeText: "text-zinc-400" };
-  const key = agent.toLowerCase().replace(/^the\s+/, "");
-  for (const [k, v] of Object.entries(AGENT_CONFIG)) {
-    if (key.includes(k)) return v;
+
+  const configKey = AGENT_NAME_MAP[agent];
+  if (configKey && AGENT_CONFIG[configKey]) {
+    return AGENT_CONFIG[configKey];
   }
-  return {
-    icon: "\uD83E\uDD16",
-    label: agent,
-    dotColor: "bg-zinc-500",
-    badgeBg: "bg-zinc-500/15",
-    badgeText: "text-zinc-400",
-  };
+
+  // Fallback: try lowercase matching
+  const lower = agent.toLowerCase().replace(/^the[_\s]+/, "").replace(/analyst|strategist/gi, "").trim();
+  for (const [k, v] of Object.entries(AGENT_CONFIG)) {
+    if (lower.includes(k)) return v;
+  }
+
+  return { icon: "\uD83E\uDD16", label: agent, dotColor: "bg-zinc-500", badgeBg: "bg-zinc-500/15", badgeText: "text-zinc-400" };
+}
+
+/** Strip redundant agent name prefix from thought message */
+function cleanThoughtMessage(agent: string | undefined, message: string): string {
+  if (!agent || !message) return message;
+  // Remove patterns like "the_quant: ", "TheSentimentAnalyst: ", "TheFundamentalist: "
+  const prefixes = [
+    agent + ":",
+    agent + " :",
+    agent.replace(/^the_/, "") + ":",
+  ];
+  let cleaned = message;
+  for (const prefix of prefixes) {
+    if (cleaned.toLowerCase().startsWith(prefix.toLowerCase())) {
+      cleaned = cleaned.slice(prefix.length).trim();
+      break;
+    }
+  }
+  return cleaned;
 }
 
 /* ── Spring animation ── */
@@ -253,7 +287,7 @@ export function ThoughtStream({ thoughts, isLive, className }: ThoughtStreamProp
                         isDecision ? "text-violet-300" : isWarning ? "text-amber-300" : "text-zinc-400"
                       )}
                     >
-                      {thought.message}
+                      {cleanThoughtMessage(thought.agent, thought.message)}
                     </p>
                   </div>
                 </motion.div>
