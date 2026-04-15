@@ -753,8 +753,58 @@ export default function SettingsPage() {
           </div>
         </Section>
 
+        {/* ── MCP Server ── */}
+        <Section icon={<Cpu className="h-4 w-4 text-emerald-400" />} title="MCP Server — AI Agent Access" delay={sectionDelay(6)}>
+          <p className="text-xs text-zinc-500 mb-4">
+            External AI agents (Claude, Cursor, Windsurf) can access your backtesting engine via the Model Context Protocol.
+          </p>
+
+          <div className="space-y-3">
+            <div className="rounded-lg border border-zinc-800 bg-zinc-900/30 p-3">
+              <p className="text-xs font-medium text-zinc-400 mb-2">SSE Transport (Cursor, Windsurf)</p>
+              <code className="block rounded bg-zinc-800 px-3 py-2 text-xs text-violet-300 font-mono">
+                {API_URL}/mcp
+              </code>
+            </div>
+
+            <div className="rounded-lg border border-zinc-800 bg-zinc-900/30 p-3">
+              <p className="text-xs font-medium text-zinc-400 mb-2">stdio Transport (Claude Desktop)</p>
+              <pre className="rounded bg-zinc-800 px-3 py-2 text-[10px] text-zinc-300 font-mono overflow-x-auto">
+{`{
+  "mcpServers": {
+    "alpha-labs": {
+      "command": "python",
+      "args": ["mcp_server.py"]
+    }
+  }
+}`}
+              </pre>
+            </div>
+
+            <div className="rounded-lg border border-zinc-800 bg-zinc-900/30 p-3">
+              <p className="text-xs font-medium text-zinc-400 mb-3">Available Tools</p>
+              <div className="space-y-2">
+                {[
+                  { name: "research_ticker", desc: "6-agent stock analysis → consensus signal" },
+                  { name: "run_backtest", desc: "Full backtest with custom strategy params" },
+                  { name: "get_signals", desc: "Current signals for all tracked tickers" },
+                  { name: "fetch_market_data", desc: "Real-time OHLCV from YFinance" },
+                  { name: "get_platform_status", desc: "Universe, cache, API keys status" },
+                ].map((tool) => (
+                  <div key={tool.name} className="flex items-center gap-3">
+                    <code className="rounded bg-violet-500/10 px-2 py-0.5 text-[10px] text-violet-300 font-mono shrink-0">
+                      {tool.name}
+                    </code>
+                    <span className="text-[10px] text-zinc-500">{tool.desc}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </Section>
+
         {/* ── About ── */}
-        <Section icon={<Info className="h-4 w-4 text-zinc-400" />} title="About" delay={sectionDelay(6)}>
+        <Section icon={<Info className="h-4 w-4 text-zinc-400" />} title="About" delay={sectionDelay(7)}>
           <p className="text-sm text-zinc-300">Agentic Alpha Lab <span className="font-mono text-violet-300">v1.0.0</span></p>
           <p className="mt-1 text-xs text-zinc-500">Built with Claude Code</p>
           <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
