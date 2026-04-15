@@ -14,7 +14,7 @@ from datetime import datetime, timezone
 from typing import Any
 
 from jobs.base import BaseJobRunner
-from jobs.models import Job, JobStatus
+from jobs.models import Job, JobStatus, JobType
 
 logger = logging.getLogger(__name__)
 
@@ -43,9 +43,43 @@ class ThreadPoolJobRunner(BaseJobRunner):
         return self._jobs.get(job_id)
 
     def list_jobs(self, user_id: str | None = None, limit: int = 50, offset: int = 0) -> list[Job]:
+        # Combine in-memory jobs with DB-persisted history
         jobs = list(self._jobs.values())
+
+        # Load completed jobs from DB if we have few in-memory
+        if len(jobs) < limit:
+            try:
+                from db.session import get_db_session
+                from db.models import ResearchHistory
+                db = get_db_session()
+                try:
+                    query = db.query(ResearchHistory).order_by(ResearchHistory.created_at.desc()).limit(limit)
+                    if user_id:
+                        query = query.filter_by(user_id=user_id)
+                    for row in query.all():
+                        # Skip if already in memory
+                        if any(j.id == row.id for j in jobs):
+                            continue
+                        bt = (row.result_json or {}).get("backtest", {})
+                        jobs.append(Job(
+                            id=row.id,
+                            job_type=JobType.RESEARCH,
+                            status=JobStatus.COMPLETED,
+                            params={"ticker": row.ticker, "strategy": row.strategy},
+                            progress=1.0,
+                            progress_stage="complete",
+                            result=row.result_json,
+                            created_at=row.created_at,
+                            completed_at=row.created_at,
+                            user_id=row.user_id,
+                        ))
+                finally:
+                    db.close()
+            except Exception:
+                pass  # DB not available, use in-memory only
+
         if user_id:
-            jobs = [j for j in jobs if j.user_id == user_id]
+            jobs = [j for j in jobs if j.user_id == user_id or j.user_id is None]
         jobs.sort(key=lambda j: j.created_at, reverse=True)
         return jobs[offset : offset + limit]
 

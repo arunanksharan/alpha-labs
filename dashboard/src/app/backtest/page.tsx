@@ -795,6 +795,8 @@ function BacktestPageInner() {
     async (body: ReturnType<typeof buildJobBody>) => {
       setSubmitting(true);
       setError(null);
+      // Don't clear results if we have a pinned run (comparison mode)
+      if (!pinnedRun) setResults(null);
 
       try {
         const res = await fetch(`${API_URL}/api/jobs/submit`, {
@@ -818,7 +820,7 @@ function BacktestPageInner() {
         setSubmitting(false);
       }
     },
-    [pollJob]
+    [pollJob, pinnedRun]
   );
 
   /* ---------- Run backtest (button click) ---------- */
@@ -896,8 +898,9 @@ function BacktestPageInner() {
     "w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-50 placeholder:text-zinc-600 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500";
 
   /* ---------- Which results to show ---------- */
-  const displayResults = results;
-  const isComparing = pinnedRun !== null && results !== null;
+  // Only show results if metrics are fully populated
+  const displayResults = results?.metrics?.sharpe_ratio != null ? results : null;
+  const isComparing = pinnedRun !== null && displayResults !== null;
 
   return (
     <div className="min-h-screen bg-zinc-950 print:bg-white">

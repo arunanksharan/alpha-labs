@@ -622,9 +622,9 @@ function ChatPageInner() {
             />
           </div>
           <VoiceInput
-            onTranscript={(text) => { if (!loading) send(text); }}
+            onInterim={(text) => setInput(text)}
+            onFinal={(text) => setInput(text)}
             size="md"
-            placeholder="Voice command"
           />
           <button
             type="button"

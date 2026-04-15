@@ -100,8 +100,37 @@ def run_research_job(
     # --- Step 3: Compute features ---
     cb("computing_features", 0.25, "Computing features")
     try:
-        from core.orchestrator import _compute_features
-        features = _compute_features(strategy.required_features, prices, ticker)
+        # For custom windows, compute the z-score directly instead of using the registry
+        # This handles cases like zscore_30 when only zscore_20 is registered
+        from features.technical.zscore import ZScoreFeature
+        features = prices.clone()
+        for feat_name in strategy.required_features:
+            if feat_name.startswith("zscore_"):
+                window = int(feat_name.split("_")[1])
+                feat = ZScoreFeature(window=window)
+                features = feat.compute(features)
+            elif feat_name.startswith("momentum_"):
+                from features.technical.momentum import MomentumFeature
+                parts = feat_name.split("_")
+                lookback = int(parts[1]) if len(parts) > 1 else 252
+                skip = int(parts[2]) if len(parts) > 2 else 21
+                feat = MomentumFeature(lookback=lookback, skip_recent=skip)
+                features = feat.compute(features)
+            else:
+                # Fall back to registry for other features
+                try:
+                    from core.orchestrator import _compute_features
+                    features = _compute_features([feat_name], features, ticker)
+                except Exception:
+                    pass
+
+        # Ensure date column is proper Date type for backtest engine
+        if "date" in features.columns:
+            import polars as pl
+            dtype = features["date"].dtype
+            if isinstance(dtype, pl.Datetime):
+                features = features.with_columns(pl.col("date").dt.date().alias("date"))
+
         cb("computing_features", 0.35, f"Features computed")
     except Exception as exc:
         return _error_result(ticker, strategy_name, start_date, end_date, f"Feature error: {exc}")

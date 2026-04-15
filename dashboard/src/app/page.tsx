@@ -406,11 +406,19 @@ export default function MonitorPage() {
   /* ── Handlers ── */
   const handleRun = useCallback(async () => {
     const ticker = selectedTicker || (universeTickers.length > 0 ? universeTickers[0] : "AAPL");
-    store.clearEvents();
-    store.setApprovalPending(false);
-    store.setMode("live");
-    await startRun(ticker, "mean_reversion");
-  }, [startRun, store, selectedTicker, universeTickers]);
+    // Submit as async job (not the agent pipeline which blocks on approval gate)
+    try {
+      const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+      await fetch(`${API_URL}/api/jobs/submit`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ ticker, strategy: "mean_reversion", start_date: "2023-06-01", end_date: "2025-12-31" }),
+      });
+    } catch {}
+    router.push(href("/jobs"));
+  }, [router, selectedTicker, universeTickers]);
 
   const handleApprove = useCallback(
     async (ticker: string) => {
@@ -548,9 +556,8 @@ export default function MonitorPage() {
                 {isRunning ? "Agents Running..." : "Start Research"}
               </motion.button>
               <VoiceInput
-                onTranscript={(text) => router.push(href(`/chat?q=${encodeURIComponent(text)}`))}
+                onFinal={(text) => router.push(href(`/chat?q=${encodeURIComponent(text)}`))}
                 size="sm"
-                placeholder="Voice command"
               />
             </div>
           </div>
