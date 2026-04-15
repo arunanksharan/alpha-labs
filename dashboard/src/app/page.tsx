@@ -12,7 +12,6 @@ import { EquityCurveChart } from "@/components/EquityCurveChart";
 import { SignalDecayChart } from "@/components/SignalDecayChart";
 import { SignalCard } from "@/components/SignalCard";
 import { useWebSocket } from "@/hooks/useWebSocket";
-import { VoiceInput } from "@/components/VoiceInput";
 import { useAgents } from "@/hooks/useAgents";
 import type { AgentEvent, Signal, BacktestMetrics, EquityCurvePoint, ICCurvePoint } from "@/types";
 
@@ -364,7 +363,6 @@ export default function MonitorPage() {
     : DEMO_SIGNALS;
   const equity = DEMO_EQUITY;
   const icCurve = DEMO_IC;
-  const isRunning = events.some((e) => e.status === "running");
 
   /* ── Morning Brief: live API > demo ── */
   const briefSignals = useMemo(
@@ -384,41 +382,80 @@ export default function MonitorPage() {
     [hasApiData, apiSignals],
   );
 
-  /* ── Map store events to ThoughtStream format ── */
+  /* ── Research state ── */
+  const [researching, setResearching] = useState(false);
+  const [liveThoughts, setLiveThoughts] = useState<typeof DEMO_THOUGHTS>([]);
+  const [researchResult, setResearchResult] = useState<string | null>(null);
+  const isRunning = researching;
+
+  /* ── Thought Stream data: live agent thoughts take priority ── */
   const thoughtStreamData = useMemo(() => {
-    if (store.events.length > 0) {
-      return store.events.map((e) => ({
-        timestamp: e.timestamp || new Date().toISOString(),
-        agent: e.agent_name || "Agent",
-        message: e.message || "",
-        type: (e.status === "awaiting_approval"
-          ? "warning"
-          : e.status === "completed"
-          ? "info"
-          : e.status === "running"
-          ? "analysis"
-          : "info") as "info" | "analysis" | "decision" | "warning",
-      }));
-    }
-    return DEMO_THOUGHTS;
-  }, [store.events]);
+    if (liveThoughts.length > 0) return liveThoughts;
+    return [];
+  }, [liveThoughts]);
 
   /* ── Handlers ── */
   const handleRun = useCallback(async () => {
     const ticker = selectedTicker || (universeTickers.length > 0 ? universeTickers[0] : "AAPL");
-    // Submit as async job (not the agent pipeline which blocks on approval gate)
+    setResearching(true);
+    setLiveThoughts([]);
+    setResearchResult(null);
+
+    // Add initial "thinking" thought
+    const addThought = (agent: string, message: string, type: "info" | "analysis" | "decision" = "analysis") => {
+      setLiveThoughts((prev) => [...prev, {
+        timestamp: new Date().toISOString(),
+        agent,
+        message,
+        type,
+      }]);
+    };
+
+    addThought("Director", `Initiating analysis for ${ticker}...`, "info");
+
     try {
       const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
       const headers: Record<string, string> = { "Content-Type": "application/json" };
       if (token) headers["Authorization"] = `Bearer ${token}`;
-      await fetch(`${API_URL}/api/jobs/submit`, {
+
+      const res = await fetch(`${API_URL}/api/chat`, {
         method: "POST",
         headers,
-        body: JSON.stringify({ ticker, strategy: "mean_reversion", start_date: "2023-06-01", end_date: "2025-12-31" }),
+        body: JSON.stringify({ message: `Analyze ${ticker} for mean reversion` }),
       });
-    } catch {}
-    router.push(href("/jobs"));
-  }, [router, selectedTicker, universeTickers]);
+
+      if (!res.ok) throw new Error(`API returned ${res.status}`);
+      const data = await res.json();
+
+      // Parse agent_traces and add them one by one with delays
+      const traces = data.agent_traces || [];
+      for (let i = 0; i < traces.length; i++) {
+        const trace = traces[i];
+        const agentName = String(trace.agent || "Agent").replace("the_", "").replace("_", " ");
+        const capitalized = agentName.charAt(0).toUpperCase() + agentName.slice(1);
+        const thoughts = trace.thoughts || [];
+        const signal = trace.signal || "neutral";
+        const conf = trace.confidence || 0;
+        const summary = thoughts[0] || `Signal: ${signal} (${(conf * 100).toFixed(0)}%)`;
+
+        // Stagger each agent's appearance
+        await new Promise((r) => setTimeout(r, 300));
+        addThought(capitalized, summary);
+      }
+
+      // Final synthesis
+      await new Promise((r) => setTimeout(r, 400));
+      const answer = data.answer || "";
+      const signal = answer.includes("bullish") ? "BULLISH" : answer.includes("bearish") ? "BEARISH" : "NEUTRAL";
+      addThought("Director", `Consensus: ${signal} on ${ticker}. ${data.citations?.[0] || ""}`, "decision");
+      setResearchResult(answer);
+
+    } catch (err) {
+      addThought("Director", `Analysis failed: ${err instanceof Error ? err.message : "unknown error"}`, "info");
+    } finally {
+      setResearching(false);
+    }
+  }, [selectedTicker, universeTickers]);
 
   const handleApprove = useCallback(
     async (ticker: string) => {
@@ -553,12 +590,8 @@ export default function MonitorPage() {
                 ) : (
                   <Play className="h-4 w-4" />
                 )}
-                {isRunning ? "Agents Running..." : "Start Research"}
+                {isRunning ? "Analyzing..." : "Start Research"}
               </motion.button>
-              <VoiceInput
-                onFinal={(text) => router.push(href(`/chat?q=${encodeURIComponent(text)}`))}
-                size="sm"
-              />
             </div>
           </div>
 
@@ -625,11 +658,22 @@ export default function MonitorPage() {
 
       {/* ── RIGHT COLUMN: Thought Stream (sticky) ── */}
       <div className="hidden lg:block w-[380px] shrink-0 border-l border-zinc-800 h-full">
-        <ThoughtStream
-          thoughts={thoughtStreamData}
-          isLive={connected || mode === "demo"}
-          className="h-full rounded-none border-0"
-        />
+        {thoughtStreamData.length > 0 ? (
+          <ThoughtStream
+            thoughts={thoughtStreamData}
+            isLive={researching}
+            className="h-full rounded-none border-0"
+          />
+        ) : (
+          <div className="flex h-full flex-col items-center justify-center px-6 text-center">
+            <div className="h-10 w-10 rounded-xl bg-violet-500/10 flex items-center justify-center mb-3">
+              <Zap className="h-5 w-5 text-violet-400/50" />
+            </div>
+            <p className="text-xs text-zinc-600 leading-relaxed">
+              Click <span className="text-violet-400">Start Research</span> to see live agent reasoning
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

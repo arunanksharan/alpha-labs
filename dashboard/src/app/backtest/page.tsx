@@ -830,44 +830,37 @@ function BacktestPageInner() {
     await submitJob(buildJobBody());
   }, [submitJob, buildJobBody]);
 
-  /* ---------- Slider change with debounce ---------- */
+  /* ---------- Slider change — NO auto-submit, manual trigger only ---------- */
+  const [slidersDirty, setSlidersDirty] = useState(false);
+
   const handleSliderChange = useCallback(
     (key: keyof SliderValues, value: number) => {
       setSliderValues((prev) => ({ ...prev, [key]: value }));
-      clearTimeout(debounceRef.current);
-      debounceRef.current = setTimeout(() => {
-        // Build a fresh body with the updated slider value
-        const updated = { ...sliderValues, [key]: value };
-        const body = {
-          ticker,
-          strategy,
-          start_date: startDate,
-          end_date: endDate,
-          config: {
-            initial_capital: parseFloat(initialCapital),
-            commission: updated.commission_bps / 10000,
-            slippage: updated.slippage_bps / 10000,
-            risk_free_rate: parseFloat(riskFreeRate),
-            strategy_params: {
-              entry_threshold: updated.entry_threshold,
-              window: updated.lookback_window,
-            },
-          },
-        };
-        submitJob(body);
-      }, 500);
+      setSlidersDirty(true);
     },
-    [
-      sliderValues,
+    []
+  );
+
+  const handleRunWithSliders = useCallback(() => {
+    const body = {
       ticker,
       strategy,
-      startDate,
-      endDate,
-      initialCapital,
-      riskFreeRate,
-      submitJob,
-    ]
-  );
+      start_date: startDate,
+      end_date: endDate,
+      config: {
+        initial_capital: parseFloat(initialCapital),
+        commission: sliderValues.commission_bps / 10000,
+        slippage: sliderValues.slippage_bps / 10000,
+        risk_free_rate: parseFloat(riskFreeRate),
+        strategy_params: {
+          entry_threshold: sliderValues.entry_threshold,
+          window: sliderValues.lookback_window,
+        },
+      },
+    };
+    submitJob(body);
+    setSlidersDirty(false);
+  }, [sliderValues, ticker, strategy, startDate, endDate, initialCapital, riskFreeRate, submitJob]);
 
   /* ---------- Pin / clear comparison ---------- */
   const handlePin = useCallback(() => {
@@ -1163,9 +1156,24 @@ function BacktestPageInner() {
             <h2 className="text-sm font-medium uppercase tracking-wider text-zinc-400">
               Parameter Sensitivity
             </h2>
-            <span className="ml-auto text-[10px] text-zinc-600">
-              Adjusting auto-submits a new run
-            </span>
+            {slidersDirty && (
+              <motion.button
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={handleRunWithSliders}
+                disabled={polling || submitting}
+                className="ml-auto flex items-center gap-1.5 rounded-lg bg-violet-500 px-4 py-1.5 text-xs font-medium text-white hover:bg-violet-400 shadow-lg shadow-violet-500/20"
+              >
+                <Play className="h-3.5 w-3.5" /> Run with These Params
+              </motion.button>
+            )}
+            {!slidersDirty && (
+              <span className="ml-auto text-[10px] text-zinc-600">
+                Adjust sliders, then click Run
+              </span>
+            )}
           </div>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             <ParamSlider
