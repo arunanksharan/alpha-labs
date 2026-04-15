@@ -17,6 +17,22 @@ from agents.specialists import AgentFinding
 
 logger = logging.getLogger(__name__)
 
+# Clean display names for agent output
+_DISPLAY_NAMES = {
+    "the_quant": "Quant",
+    "the_technician": "Technician",
+    "TheSentimentAnalyst": "Sentiment",
+    "the_fundamentalist": "Fundamentalist",
+    "TheFundamentalist": "Fundamentalist",
+    "TheMacroStrategist": "Macro",
+    "the_macro_strategist": "Macro",
+    "the_contrarian": "Contrarian",
+}
+
+
+def _display_name(agent_name: str) -> str:
+    return _DISPLAY_NAMES.get(agent_name, agent_name)
+
 
 @dataclass
 class ResearchBrief:
@@ -194,7 +210,7 @@ class ResearchDirector:
             votes[signal] = votes.get(signal, 0) + 1
             confidence_sum += f.get("confidence", 0.0)
             if f.get("reasoning"):
-                key_points.append(f"{f['agent_name']}: {f['reasoning']}")
+                key_points.append(f"{_display_name(f['agent_name'])}: {f['reasoning']}")
 
         total = len(findings)
         consensus_signal = max(votes, key=votes.get)  # type: ignore[arg-type]
@@ -375,7 +391,7 @@ class ResearchDirector:
                 f"{syn.get('reasoning', '')}"
             )
             citations = [
-                f"{f['agent_name']}: {f['reasoning']}"
+                f"{_display_name(f['agent_name'])}: {f['reasoning']}"
                 for f in result.get("findings", [])
                 if f.get("reasoning")
             ]
@@ -441,7 +457,7 @@ class ResearchDirector:
                     f"{syn.get('reasoning', '')}"
                 )
                 citations = [
-                    f"{f['agent_name']}: {f['reasoning']}"
+                    f"{_display_name(f['agent_name'])}: {f['reasoning']}"
                     for f in result.get("findings", [])
                     if f.get("reasoning")
                 ]
