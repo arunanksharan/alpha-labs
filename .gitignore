@@ -49,6 +49,9 @@ htmlcov/
 .venv312/
 .next/
 
+# Playwright MCP (test artifacts)
+.playwright-mcp/
+
 # Personal / private docs (career planning, recruitment, interview prep)
 docs/personal/
 docs/roadmap/
