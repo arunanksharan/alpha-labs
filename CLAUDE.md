@@ -35,7 +35,7 @@ AI-powered quantitative research platform with statistically validated agentic s
 - **API**: FastAPI backend serving signals, backtests, analytics via REST
 
 ### Design Reference
-- Follow Avashi design system: `/Users/paruljuniwal/kuzushi_labs/avashi/avashi-deploy/CLAUDE.md`
+- Follow Avashi design system (see dashboard/CLAUDE.md for details)
 - Quality bar: Linear, Vercel, Raycast level UI
 
 ## Code Style

@@ -48,3 +48,13 @@ htmlcov/
 # Temp environments
 .venv312/
 .next/
+
+# Personal / private docs (career planning, recruitment, interview prep)
+docs/personal/
+docs/roadmap/
+
+# Research papers (copyrighted, download separately)
+docs/papers/*.pdf
+
+# Screenshots (local only)
+docs/screenshots/
